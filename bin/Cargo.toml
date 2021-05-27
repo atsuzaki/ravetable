@@ -11,10 +11,10 @@ cpal = "0.13.3"
 clap = { version = "2.33.3", default-features = false }
 hound = "3.4.0"
 
-tuix = { git = "https://github.com/SonicZentropy/tuix", branch = "feature/wgpu_backend" }
+tuix = { git = "https://github.com/SonicZentropy/tuix",  rev = "8b3ee66" }
 
 log = "0.4.14"
-env_logger = "0.8.3"
+fern = "0.6.0"
 
 anyhow = "1.0.40"
 num-traits = "0.2.14"

@@ -686,6 +686,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fern"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c9a4820f0ccc8a7afd67c39a0f1a0f4b07ca1725164271a64939d7aeb9af065"
+dependencies = [
+ "log",
+]
+
+[[package]]
 name = "filters"
 version = "0.1.0"
 
@@ -2070,7 +2079,7 @@ dependencies = [
  "coreaudio-rs",
  "cpal",
  "crossbeam-channel",
- "env_logger",
+ "fern",
  "hound",
  "jack",
  "log",
@@ -2420,7 +2429,7 @@ checksum = "62ddb402ac6c2af6f7a2844243887631c4e94b51585b229fcfddb43958cd55ca"
 [[package]]
 name = "tuix"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?branch=feature/wgpu_backend#4b474161b08b563580ada3ec028014ca11b88756"
+source = "git+https://github.com/SonicZentropy/tuix?rev=8b3ee66#8b3ee668f3365786818b584231cbae55bcb4a477"
 dependencies = [
  "pollster",
  "tuix_application",
@@ -2432,7 +2441,7 @@ dependencies = [
 [[package]]
 name = "tuix_application"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?branch=feature/wgpu_backend#4b474161b08b563580ada3ec028014ca11b88756"
+source = "git+https://github.com/SonicZentropy/tuix?rev=8b3ee66#8b3ee668f3365786818b584231cbae55bcb4a477"
 dependencies = [
  "femtovg",
  "keyboard-types",
@@ -2444,7 +2453,7 @@ dependencies = [
 [[package]]
 name = "tuix_core"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?branch=feature/wgpu_backend#4b474161b08b563580ada3ec028014ca11b88756"
+source = "git+https://github.com/SonicZentropy/tuix?rev=8b3ee66#8b3ee668f3365786818b584231cbae55bcb4a477"
 dependencies = [
  "cssparser",
  "femtovg",
@@ -2457,7 +2466,7 @@ dependencies = [
 [[package]]
 name = "tuix_inspector_derive"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?branch=feature/wgpu_backend#4b474161b08b563580ada3ec028014ca11b88756"
+source = "git+https://github.com/SonicZentropy/tuix?rev=8b3ee66#8b3ee668f3365786818b584231cbae55bcb4a477"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2467,7 +2476,7 @@ dependencies = [
 [[package]]
 name = "tuix_wgpu"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?branch=feature/wgpu_backend#4b474161b08b563580ada3ec028014ca11b88756"
+source = "git+https://github.com/SonicZentropy/tuix?rev=8b3ee66#8b3ee668f3365786818b584231cbae55bcb4a477"
 dependencies = [
  "env_logger",
  "femtovg",
@@ -2483,7 +2492,7 @@ dependencies = [
 [[package]]
 name = "tuix_winit"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?branch=feature/wgpu_backend#4b474161b08b563580ada3ec028014ca11b88756"
+source = "git+https://github.com/SonicZentropy/tuix?rev=8b3ee66#8b3ee668f3365786818b584231cbae55bcb4a477"
 dependencies = [
  "femtovg",
  "keyboard-types",

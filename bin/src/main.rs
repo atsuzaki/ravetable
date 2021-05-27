@@ -12,6 +12,7 @@ use std::thread;
 use tuix::Application;
 use tuix::*;
 use crate::utils::sample_converter::load_waveform;
+use cpal::SampleFormat;
 
 mod utils;
 
@@ -194,10 +195,35 @@ impl Widget for Controller {
     }
 }
 
+
+fn init_logger() {
+	fern::Dispatch::new()
+		// Perform allocation-free log formatting
+		.format(|out, message, record| {
+			out.finish(format_args!(
+				"[{}][{}] {}",
+				record.target(),
+				record.level(),
+				message))
+		})
+		// Add blanket level filter -
+		.level(log::LevelFilter::Info)
+		// Output to stdout, files, and other Dispatch configurations
+		.chain(std::io::stdout())
+		//.chain(fern::log_file(&log_filepath).unwrap())
+		// Apply globally
+		.apply()
+		.unwrap();
+
+}
+
 fn main() -> Result<(), anyhow::Error> {
+
+	init_logger();
     // Enumerate devices prints out all available devices and its default and supported configs
     // Run with RUST_LOG=info to see them
     let _ = utils::enumerate_devices().unwrap();
+
 
     // Creating an output writer and write a sine wave to sine.wav
     // let mut wav_writer = hound::WavWriter::create("sine.wav", spec).unwrap();
@@ -227,7 +253,8 @@ fn main() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-pub fn play_audio(buffer: Vec<f64>) -> Result<(), anyhow::Error> {
+// pub fn play_audio(buffer: Vec<f64>) -> Result<(), anyhow::Error> {
+pub fn play_audio(buffer: Vec<f32>) -> Result<(), anyhow::Error> {
     let (command_sender, command_receiver) = crossbeam_channel::bounded(1024);
     thread::spawn(move || {
         // Conditionally compile with jack if the feature is specified.
@@ -269,7 +296,6 @@ pub fn play_audio(buffer: Vec<f64>) -> Result<(), anyhow::Error> {
             .expect("Failed to get default input config");
         info!("Default input config: {:?}", config);
 
-        // TODO: we're running all f64, what to do with this
         match config.sample_format() {
             cpal::SampleFormat::F32 => run::<f32>(
                 &device,
@@ -315,7 +341,7 @@ pub struct Oscillator {
 pub fn run<T>(
     device: &cpal::Device,
     config: &cpal::StreamConfig,
-    buffer_to_play: Vec<f64>,
+    buffer_to_play: Vec<f32>,
     command_receiver: CrossbeamReceiver,
 ) -> Result<(), anyhow::Error>
 where
@@ -326,14 +352,14 @@ where
 
     let mut buf = buffer_to_play;
     buf.reverse(); // Flip em so pop gets first samples instead of last
-    let mut next_value = move || {
-        buf.pop().unwrap_or(0.) as f32
+    let mut next_sample = move || {
+        buf.pop().unwrap_or(0.)
     };
 
     let stream = device.build_output_stream(
         config,
         move |data: &mut [T], _: &cpal::OutputCallbackInfo| {
-            write_data(data, channels, &mut next_value)
+            write_data(data, channels, &mut next_sample)
         },
         err_fn,
     )?;

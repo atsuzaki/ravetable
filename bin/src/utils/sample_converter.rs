@@ -32,11 +32,12 @@
 // }
 // wav_writer.finalize().unwrap();
 // }
+use log::warn;
 
 #[derive(Debug)]
 pub struct RawWaveform {
     pub path: String,
-    pub audio_buffer: Vec<f64>,
+    pub audio_buffer: Vec<f32>,
 }
 
 pub fn load_waveform<P: AsRef<std::path::Path>>(path: P) -> RawWaveform {
@@ -44,14 +45,28 @@ pub fn load_waveform<P: AsRef<std::path::Path>>(path: P) -> RawWaveform {
     let mut reader = hound::WavReader::open(&path).unwrap();
     // let spec = reader.spec();
 
+
+
     // TODO: currently we only support samples with f32 bits per sample, genericize this to support more samples
-    let samples = reader.samples::<f32>().fold(vec![], |mut acc, s| {
-        acc.push(s.unwrap() as f64);
-        acc
-    });
+    //let mut samples = reader.samples::<f32>().fold(vec![], |mut acc, s| {
+	//
+	//    let sample = s.unwrap();
+	//
+	//
+	//    //warn!("32bit: {}", &sample);
+	//
+	//    let sample64 = sample as f64;
+	//
+	//    //warn!("64bit: {}", &sample64);
+	//
+    //    acc.push(sample64);
+    //    acc
+    //});
+
+
 
     RawWaveform {
         path: path.as_ref().to_string_lossy().into_owned(),
-        audio_buffer: samples
+        audio_buffer: reader.samples::<f32>().map(|f| f.unwrap()).collect(),
     }
 }
