@@ -1,6 +1,6 @@
+use crate::Message;
 use tuix::Application;
 use tuix::*;
-use crate::{Message};
 
 static THEME: &'static str = include_str!("bbytheme.css");
 
@@ -99,11 +99,10 @@ impl Widget for Controller {
     }
 }
 
-
 struct OscillatorControl {
-	amplitude_knob: Entity,
-	frequency_knob: Entity,
-	active_toggle: Entity,
+    amplitude_knob: Entity,
+    frequency_knob: Entity,
+    active_toggle: Entity,
 }
 
 /*// impl Default for OscillatorControl {
