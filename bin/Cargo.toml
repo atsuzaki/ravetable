@@ -14,6 +14,9 @@ hound = "3.4.0"
 cpal = "0.13.3"
 clap = { version = "2.33.3", default-features = false }
 
+#samplerate for converting wavs to requested output at load
+samplerate = "0.2.4"
+
 tuix = { git = "https://github.com/SonicZentropy/tuix",  rev = "8b3ee66" }
 
 log = "0.4.14"
