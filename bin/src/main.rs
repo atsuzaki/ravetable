@@ -1,5 +1,5 @@
 // TODO: write title for this thing
-//! Clipped Sine Wave assignment
+//! Ravetable
 //!
 //! Playback code largely adapted from cpal examples: https://github.com/RustAudio/cpal/tree/master/examples
 //! Output WAV is saved to "$CARGO_MANIFEST_DIR/recorded.wav".
@@ -8,30 +8,28 @@
 
 #![feature(format_args_capture)]
 
-use hound;
-use log::{error, info, warn};
-use std::thread;
-
-use crate::playback::run;
-use crate::utils::sample_converter::load_waveform;
 use cpal::traits::{DeviceTrait, HostTrait};
-use hound::WavSpec;
+use once_cell::sync::OnceCell;
+
+use crate::mixer::Mixer;
+use crate::playback::run;
+use crate::synths::{Oscillator, Wavetable};
+use cpal::SampleRate;
 
 mod gui;
+mod mixer;
 mod playback;
 mod synths;
 mod utils;
 
-pub struct InputWav {
-    samples: Option<Vec<f32>>,
-    spec: WavSpec,
-    file_path: String,
+pub static SAMPLE_RATE: OnceCell<SampleRate> = OnceCell::new();
+
+pub fn get_sample_rate() -> f32 {
+    SAMPLE_RATE.get().unwrap().0 as f32
 }
 
 fn main() -> Result<(), anyhow::Error> {
     init_logger();
-
-    let test_wav = "test_wavs/CantinaBand.wav".to_string();
 
     let host = cpal::default_host();
 
@@ -40,13 +38,24 @@ fn main() -> Result<(), anyhow::Error> {
 
     let config = device.default_output_config().unwrap();
     println!("Default output config: {:?}", config);
+    SAMPLE_RATE.set(config.sample_rate()).unwrap();
 
-    let input_wav = load_waveform(test_wav, config.sample_rate().0);
+    let wavetable = Wavetable::create_wavetable(
+        "test_wavs/CantinaBandMONO.wav".to_string(),
+        config.sample_rate().0,
+    );
+    let osc = Oscillator::new(0.65, wavetable);
+
+    let wavetable2 =
+        Wavetable::create_wavetable("test_wavs/sine.wav".to_string(), config.sample_rate().0);
+    let osc2 = Oscillator::new(0.10, wavetable2);
+
+    let mixer = Mixer::new(vec![osc, osc2]);
 
     match config.sample_format() {
-        cpal::SampleFormat::F32 => run::<f32>(&device, &config.into(), input_wav),
-        cpal::SampleFormat::I16 => run::<i16>(&device, &config.into(), input_wav),
-        cpal::SampleFormat::U16 => run::<u16>(&device, &config.into(), input_wav),
+        cpal::SampleFormat::F32 => run::<f32>(&device, &config.into(), mixer),
+        cpal::SampleFormat::I16 => run::<i16>(&device, &config.into(), mixer),
+        cpal::SampleFormat::U16 => run::<u16>(&device, &config.into(), mixer),
     };
 
     Ok(())

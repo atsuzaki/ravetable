@@ -1,21 +1,19 @@
-use cpal::{
-    traits::{DeviceTrait, HostTrait, StreamTrait},
-    SampleRate,
-};
+use cpal::traits::{DeviceTrait, StreamTrait};
 
-use crate::{synths::SineOscillator, InputWav};
+use crate::mixer::Mixer;
+use crate::synths::Oscillator;
 
 pub fn run<T>(
     device: &cpal::Device,
     config: &cpal::StreamConfig,
-    mut input_wav: InputWav,
+    mut mixer: Mixer,
 ) -> Result<(), anyhow::Error>
 where
     T: cpal::Sample,
 {
     let output_channels = config.channels as usize;
-    let input_channels = input_wav.spec.channels;
-    let mut samples = input_wav.samples.take().unwrap().into_iter(); //input_wav's job is basically done now
+    let input_channels = mixer.channels;
+    // let mut samples = input_wav.samples.take().unwrap().into_iter(); //input_wav's job is basically done now
 
     /////// INPUT WAV VERSION
     // let mut next_value = move || {
@@ -23,8 +21,7 @@ where
     // };
 
     /////// SINE OSC VERSION
-    let mut sine_osc = SineOscillator::new(0.25, 400., config.sample_rate.0 as f32);
-    let mut next_value = move || sine_osc.get_next_sample();
+    let mut next_value = move || mixer.get_next_sample();
 
     let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
 
