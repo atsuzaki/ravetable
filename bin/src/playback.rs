@@ -2,13 +2,14 @@ use cpal::{
     traits::{DeviceTrait, StreamTrait},
 };
 
-use crate::{synths::Oscillator};
+use crate::{synths::Oscillator, Message};
 use crate::mixer::Mixer;
 
 pub fn run<T>(
     device: &cpal::Device,
     config: &cpal::StreamConfig,
     mut mixer: Mixer,
+    command_receiver: crossbeam_channel::Receiver<Message>
 ) -> Result<(), anyhow::Error>
 where
     T: cpal::Sample,
@@ -23,7 +24,8 @@ where
     // };
 
     /////// SINE OSC VERSION
-    let mut next_value = move || mixer.get_next_sample();
+
+    let mut next_value = move || mixer.get_next_sample(&command_receiver);
 
     let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
 
