@@ -4,7 +4,7 @@ use tuix::*;
 
 static THEME: &'static str = include_str!("bbytheme.css");
 
-struct Controller {
+pub struct Controller {
     command_sender: crossbeam_channel::Sender<Message>,
     // oscillators: [OscillatorControl; 3],
     amplitude_knob: Entity,

@@ -11,10 +11,14 @@
 use cpal::traits::{DeviceTrait, HostTrait};
 use once_cell::sync::OnceCell;
 
-use crate::mixer::Mixer;
 use crate::playback::run;
 use crate::synths::{Oscillator, Wavetable};
 use cpal::SampleRate;
+use crate::mixer::Mixer;
+use tuix::{Application, Button, Widget};
+use tuix::*;
+use tuix::state::themes::DEFAULT_THEME;
+use crate::gui::Controller;
 
 mod gui;
 mod mixer;
@@ -31,6 +35,8 @@ pub fn get_sample_rate() -> f32 {
 fn main() -> Result<(), anyhow::Error> {
     init_logger();
 
+	//setup_tuix();
+
     let host = cpal::default_host();
 
     let device = host.default_output_device().expect("Device failed");
@@ -40,14 +46,10 @@ fn main() -> Result<(), anyhow::Error> {
     println!("Default output config: {:?}", config);
     SAMPLE_RATE.set(config.sample_rate()).unwrap();
 
-    let wavetable = Wavetable::create_wavetable(
-        "test_wavs/CantinaBandMONO.wav".to_string(),
-        config.sample_rate().0,
-    );
+    let wavetable = Wavetable::create_wavetable("test_wavs/CantinaBandMONO.wav".to_string(), config.sample_rate().0);
     let osc = Oscillator::new(0.65, wavetable);
 
-    let wavetable2 =
-        Wavetable::create_wavetable("test_wavs/sine.wav".to_string(), config.sample_rate().0);
+    let wavetable2 = Wavetable::create_wavetable("test_wavs/sine.wav".to_string(), config.sample_rate().0);
     let osc2 = Oscillator::new(0.10, wavetable2);
 
     let mixer = Mixer::new(vec![osc, osc2]);
@@ -59,6 +61,55 @@ fn main() -> Result<(), anyhow::Error> {
     };
 
     Ok(())
+}
+
+fn setup_tuix() {
+    let (command_sender, command_receiver) = crossbeam_channel::bounded(1024);
+
+    //this is my tuix example from my tuix repo
+	let app = Application::new(|state, window| {
+		match state.add_stylesheet("bin/src/bbytheme.css") {
+			Ok(_) => {}
+			Err(e) => println!("Error loading stylesheet: {}", e),
+		}
+
+		window
+			.set_title("basic")
+			.set_background_color(state, Color::rgb(55, 255, 255))
+			.set_align_items(state, AlignItems::FlexStart);
+
+        let controller = Controller::new(command_sender.clone()).build(state, window.entity(), |builder| builder);
+
+		let _one = Element::new().build(state, window.entity(), |builder| {
+			builder
+				.class("one")
+				.set_background_gradient(
+					LinearGradient::new(Direction::TopToBottom)
+						.add_stop(GradientStop::new(
+							Units::Pixels(0.0),
+							Color::rgb(190, 90, 190),
+						))
+						.add_stop(GradientStop::new(
+							Units::Pixels(30.0),
+							Color::rgb(50, 50, 50),
+						)),
+				)
+				.set_text("Button")
+		});
+
+	});
+
+	app.run();
+
+
+    ///////////// TODO: THIS IS THE CODE WE HAD IN BBYS_SYNTH
+    //let app = Application::new(|win_desc, state, window| {
+    //    state.style.parse_theme(THEME);
+	//
+    //    Controller::new(command_sender.clone()).build(state, window, |builder| builder);
+    //    win_desc.with_title("BbySynth").with_inner_size(200, 200)
+    //});
+    // app.run();
 }
 
 #[derive(Debug)]

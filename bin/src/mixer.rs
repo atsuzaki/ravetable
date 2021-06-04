@@ -15,7 +15,7 @@ impl Mixer {
 
     pub fn get_next_sample(&mut self) -> f32 {
         // Add up all the get_next_sample()s from the oscillators, divide by # of osc
-        let output_channels = self.channels;
+		let output_channels= self.channels;
         let unclamped = self
             .oscillators
             .iter_mut()
@@ -27,6 +27,6 @@ impl Mixer {
             / (self.oscillators.len() as f32);
 
         // TODO: make better limiter
-        unclamped.clamp(-1.0f32, 1.0f32)
+        unclamped.clamp( -1.0f32, 1.0f32)
     }
 }

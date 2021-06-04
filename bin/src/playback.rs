@@ -1,7 +1,9 @@
-use cpal::traits::{DeviceTrait, StreamTrait};
+use cpal::{
+    traits::{DeviceTrait, StreamTrait},
+};
 
+use crate::{synths::Oscillator};
 use crate::mixer::Mixer;
-use crate::synths::Oscillator;
 
 pub fn run<T>(
     device: &cpal::Device,
