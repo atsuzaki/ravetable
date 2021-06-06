@@ -1,6 +1,8 @@
 use crate::Message;
 use tuix::Application;
 use tuix::*;
+use crate::Message::EffectsEvent;
+use crate::EffectsEvent::IIRFreqChange;
 
 static THEME: &'static str = include_str!("bbytheme.css");
 
@@ -89,7 +91,7 @@ impl Widget for Controller {
                     }
 
                     if event.target == self.frequency_knob {
-                        self.command_sender.send(Message::Frequency(*val)).unwrap();
+                        self.command_sender.send(Message::EffectsEvent(0, IIRFreqChange(*val))).unwrap(); // TODO: currently hardcoded
                     }
                 }
 

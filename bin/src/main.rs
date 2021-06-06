@@ -6,7 +6,7 @@
 //!
 //! Katherine Philip (For CS 410P/510 Computers, Sound and Music (Spring 2021))
 
-#![feature(format_args_capture)]
+//#![feature(format_args_capture)]
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use once_cell::sync::OnceCell;
@@ -21,7 +21,7 @@ use tuix::state::themes::DEFAULT_THEME;
 use crate::gui::Controller;
 use std::thread;
 
-use effects::filters::IIRFilter;
+use effects::filters::IIRLowPassFilter;
 use effects::Effect;
 
 mod gui;
@@ -62,7 +62,7 @@ fn start_audio_backend(command_receiver: crossbeam_channel::Receiver<Message>) {
 
 		let wavetable = Wavetable::create_wavetable("test_wavs/CantinaBandMONO.wav".to_string(), config.sample_rate().0);
 		let mut osc = Oscillator::new(0.65, wavetable);
-		//osc.add_effect(Box::new(IIRFilter::new_low_pass(get_sample_rate(), 4000., 1.)));
+		osc.add_effect(Box::new(IIRLowPassFilter::new_low_pass(get_sample_rate(), 100., 1.)));
 
 		let wavetable2 = Wavetable::create_wavetable("test_wavs/sine.wav".to_string(), config.sample_rate().0);
 		let osc2 = Oscillator::new(0.010, wavetable2);
@@ -131,6 +131,13 @@ pub enum Message {
 	Note(f32),
 	Frequency(f32),
 	Amplitude(f32),
+	EffectsEvent(usize, EffectsEvent),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum EffectsEvent {
+	IIRFreqChange(f32),
+	Enabled(bool),
 }
 
 pub type CrossbeamReceiver = crossbeam_channel::Receiver<Message>;
