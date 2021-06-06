@@ -3,6 +3,8 @@ use hound::WavSpec;
 use std::ptr;
 use itertools::Itertools;
 
+use effects::Effect;
+
 pub struct Wavetable {
     pub sample_table: Vec<f32>, // Buffer of samples from .wav file
     pub spec: WavSpec,
@@ -63,9 +65,10 @@ pub struct Oscillator {
     gain: f32,
     current_index: f32,
     table_delta: f32,
+    table_size_index: usize,
 
     pub wavetable: Wavetable,
-    table_size_index: usize,
+    pub effects: Vec<Box<dyn Effect + Send>>,
 }
 
 impl Oscillator {
@@ -77,10 +80,15 @@ impl Oscillator {
 
             current_index: 0.,
             table_delta: 0.,
+            effects: vec![]
         };
 
 	    osc.update_table_delta();
         osc
+    }
+
+    pub fn add_effect(&mut self, effect: Box<dyn Effect + Send>) {
+        self.effects.push(effect);
     }
 
 	#[inline(always)]
@@ -110,6 +118,14 @@ impl Oscillator {
 		//println!("{} - {} - {} ", current_sample, self.gain, get_sample_rate());
 
         return current_sample * self.gain;
+    }
+
+    pub fn get_next_chunk(&mut self, chunk_size: u32) -> Vec<f32> {
+        let mut result = Vec::with_capacity(chunk_size as usize);
+        for _ in 0..chunk_size {
+            result.push(self.get_next_sample());
+        }
+        result
     }
 
     pub fn get_channels(&self) -> u16 {

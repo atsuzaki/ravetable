@@ -1,6 +1,6 @@
 [workspace]
 
 members = [
-    "filters",
+    "effects",
     "bin"
 ]

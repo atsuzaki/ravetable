@@ -21,6 +21,9 @@ use tuix::state::themes::DEFAULT_THEME;
 use crate::gui::Controller;
 use std::thread;
 
+use effects::filters::IIRFilter;
+use effects::Effect;
+
 mod gui;
 mod mixer;
 mod playback;
@@ -58,10 +61,11 @@ fn start_audio_backend(command_receiver: crossbeam_channel::Receiver<Message>) {
 		SAMPLE_RATE.set(config.sample_rate()).unwrap();
 
 		let wavetable = Wavetable::create_wavetable("test_wavs/CantinaBandMONO.wav".to_string(), config.sample_rate().0);
-		let osc = Oscillator::new(0.65, wavetable);
+		let mut osc = Oscillator::new(0.65, wavetable);
+		//osc.add_effect(Box::new(IIRFilter::new_low_pass(get_sample_rate(), 4000., 1.)));
 
 		let wavetable2 = Wavetable::create_wavetable("test_wavs/sine.wav".to_string(), config.sample_rate().0);
-		let osc2 = Oscillator::new(0.10, wavetable2);
+		let osc2 = Oscillator::new(0.010, wavetable2);
 
 		let mixer = Mixer::new(vec![osc, osc2]);
 

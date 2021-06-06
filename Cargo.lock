@@ -649,6 +649,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "effects"
+version = "0.1.0"
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -702,10 +706,6 @@ checksum = "8c9a4820f0ccc8a7afd67c39a0f1a0f4b07ca1725164271a64939d7aeb9af065"
 dependencies = [
  "log",
 ]
-
-[[package]]
-name = "filters"
-version = "0.1.0"
 
 [[package]]
 name = "fixedbitset"
@@ -2105,6 +2105,7 @@ dependencies = [
  "clap",
  "cpal",
  "crossbeam-channel",
+ "effects",
  "fern",
  "hound",
  "itertools",

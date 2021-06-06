@@ -1,5 +1,5 @@
 [package]
-name = "filters"
+name = "effects"
 version = "0.1.0"
 authors = ["Katherine Philip <katherinephilip98@gmail.com>"]
 edition = "2018"

@@ -24,8 +24,13 @@ where
     // };
 
     /////// SINE OSC VERSION
+    // let stream_config = StreamConfig {
+    //     channels: config.channels,
+    //     sample_rate: config.sample_rate,
+    //     buffer_size: BufferSize::Fixed(mixer.chunk_size),
+    // };
 
-    let mut next_value = move || mixer.get_next_sample(&command_receiver);
+    let mut next_value = move || mixer.get_next_sample_chunked(&command_receiver);
 
     let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
 
