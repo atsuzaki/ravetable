@@ -1,8 +1,46 @@
 //! IIR Filter, mostly adapted from oxcable and JUCE
-
-use std::f32::consts::PI;
-use crate::Effect;
+use crate::{get_sample_rate, Effect};
 use std::any::Any;
+use std::f32::consts::PI;
+
+use crate::lfo::Lfo;
+
+pub struct ModulatedFilter {
+    lfo: Lfo,
+    filter: IIRLowPassFilter,
+    base_frequency: f32,
+}
+
+impl ModulatedFilter {
+    pub fn new(lfo: Lfo, filter: IIRLowPassFilter, base_frequency: f32) -> ModulatedFilter {
+        ModulatedFilter {
+            lfo,
+            filter,
+            base_frequency,
+        }
+    }
+}
+
+impl Effect for ModulatedFilter {
+    fn process_samples(&mut self, sample_clock: u64, samples: &mut [f32]) {
+        let freq = self.base_frequency * self.lfo.get_sample(sample_clock, 1.0, 20_000.0);
+        self.filter.set_frequency(
+            get_sample_rate(),
+            freq,
+            1.,
+        );
+        self.filter.process_samples(sample_clock, samples);
+	    // samples.iter().for_each(|s| println!("{}", s));
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+}
 
 // TODO: future work, use a filter that's more friendly to modulation
 pub struct IIRLowPassFilter {
@@ -32,28 +70,28 @@ impl IIRLowPassFilter {
         }
     }
 
-	pub fn set_frequency(&mut self, sample_rate: f32, frequency: f32, q: f32) {
-		let n = 1. / (PI * frequency / sample_rate).tan();
-		let n_squared = n * n;
-		let c1_base = 1. / (1. + 1. / q * n + n_squared);
+    pub fn set_frequency(&mut self, sample_rate: f32, frequency: f32, q: f32) {
+        let n = 1. / (PI * frequency / sample_rate).tan();
+        let n_squared = n * n;
+        let c1_base = 1. / (1. + 1. / q * n + n_squared);
 
-		let c1 = c1_base;
-		let c2 = c1 * 2.0;
-		let c3 = c1;
-		let c4 = 1.;
-		let c5 = c1 * 2. * (1. - n_squared);
-		let c6 = c1 * (1. - 1. / q * n + n_squared);
+        let c1 = c1_base;
+        let c2 = c1 * 2.0;
+        let c3 = c1;
+        let c4 = 1.;
+        let c5 = c1 * 2. * (1. - n_squared);
+        let c6 = c1 * (1. - 1. / q * n + n_squared);
 
-		let a = 1.0 / c4; // TODO: this is pointless for low pass bc c4 is hard coded to 1.
+        let a = 1.0 / c4; // TODO: this is pointless for low pass bc c4 is hard coded to 1.
 
-		self.v1 = 0.;
-		self.v2 = 0.;
-		self.c0 = (c1 * a);
-		self.c1 = (c2 * a);
-		self.c2 = (c3 * a);
-		self.c3 = (c5 * a);
-		self.c4 = (c6 * a);
-	}
+        self.v1 = 0.;
+        self.v2 = 0.;
+        self.c0 = (c1 * a);
+        self.c1 = (c2 * a);
+        self.c2 = (c3 * a);
+        self.c3 = (c5 * a);
+        self.c4 = (c6 * a);
+    }
 
     pub fn new_low_pass(sample_rate: f32, frequency: f32, q: f32) -> IIRLowPassFilter {
         assert!(sample_rate > 0.);
@@ -76,7 +114,7 @@ impl IIRLowPassFilter {
 }
 
 impl Effect for IIRLowPassFilter {
-    fn process_samples(&mut self, samples: &mut [f32]) {
+    fn process_samples(&mut self, sample_clock: u64, samples: &mut [f32]) {
         let IIRLowPassFilter {
             v1,
             v2,
@@ -104,9 +142,9 @@ impl Effect for IIRLowPassFilter {
         self.v2 = lv2;
     }
 
-	fn as_any(&self) -> &dyn Any {
-		self
-	}
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self

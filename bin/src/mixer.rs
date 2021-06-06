@@ -1,4 +1,4 @@
-use crate::{synths::Oscillator, Message, EffectsEvent, get_sample_rate};
+use crate::{synths::Oscillator, Message, EffectsEvent, get_sample_rate, get_sample_clock};
 use log::{error, warn};
 use itertools::Itertools;
 use effects::filters::IIRLowPassFilter;
@@ -52,7 +52,10 @@ impl Mixer {
                             EffectsEvent::IIRFreqChange(f) => {
                                 // effects[idx[ is a trait object, need to cast it back to what it was or have a generic thing to call to handle events
                                 let fx = &mut self.oscillators[0].effects[idx];
-                                let mut fx = fx.as_any_mut().downcast_mut::<IIRLowPassFilter>().expect("Downcast failed");
+                                let mut fx = fx
+	                                .as_any_mut()
+	                                .downcast_mut::<IIRLowPassFilter>()
+	                                .expect("Downcast failed");
 	                            fx.set_frequency(get_sample_rate(), f, 1.);
 
                             }
@@ -79,7 +82,7 @@ impl Mixer {
             let mut chunks = o.get_next_chunk(sample_count);
 
             for e in &mut o.effects {
-                e.process_samples(&mut chunks);
+                e.process_samples(get_sample_clock(), &mut chunks);
             }
 
             chunks

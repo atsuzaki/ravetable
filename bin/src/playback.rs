@@ -2,7 +2,7 @@ use cpal::{
     traits::{DeviceTrait, StreamTrait},
 };
 
-use crate::{synths::Oscillator, Message};
+use crate::{synths::Oscillator, Message, inc_sample_clock};
 use crate::mixer::Mixer;
 
 pub fn run<T>(
@@ -58,6 +58,7 @@ fn write_data<T>(
 ) where
     T: cpal::Sample,
 {
+    inc_sample_clock();
     for frame in output.chunks_mut(output_channels) {
         match input_channels {
             1 => {
@@ -69,6 +70,7 @@ fn write_data<T>(
             2 => {
                 for sample in frame.iter_mut() {
                     *sample = cpal::Sample::from::<f32>(&next_sample());
+	                //println!("Sample is {}", sample.);
                 }
             }
             _ => panic!("Unsupported channels found in input audio"),

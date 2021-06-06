@@ -651,6 +651,11 @@ dependencies = [
 [[package]]
 name = "effects"
 version = "0.1.0"
+dependencies = [
+ "cpal",
+ "num-traits",
+ "once_cell",
+]
 
 [[package]]
 name = "either"
