@@ -1,8 +1,10 @@
 use cpal::SampleRate;
 use once_cell::sync::OnceCell;
 use std::any::Any;
+
 pub mod filters;
 pub mod lfo;
+pub mod adsr;
 
 // TODO: rather janky solution to avoid cyclic dependency with ravetable bin crate
 //       rework a better option in the future.

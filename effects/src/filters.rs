@@ -40,6 +40,7 @@ impl Effect for ModulatedFilter {
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
+
 }
 
 // TODO: future work, use a filter that's more friendly to modulation
@@ -86,11 +87,11 @@ impl IIRLowPassFilter {
 
         self.v1 = 0.;
         self.v2 = 0.;
-        self.c0 = (c1 * a);
-        self.c1 = (c2 * a);
-        self.c2 = (c3 * a);
-        self.c3 = (c5 * a);
-        self.c4 = (c6 * a);
+        self.c0 = c1 * a;
+        self.c1 = c2 * a;
+        self.c2 = c3 * a;
+        self.c3 = c5 * a;
+        self.c4 = c6 * a;
     }
 
     pub fn new_low_pass(sample_rate: f32, frequency: f32, q: f32) -> IIRLowPassFilter {
@@ -149,4 +150,5 @@ impl Effect for IIRLowPassFilter {
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
+
 }
