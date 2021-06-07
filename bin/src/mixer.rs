@@ -57,14 +57,15 @@ impl Mixer {
                     }
                     Message::EffectsEvent(idx, event) => {
                         match event {
+                            // TODO: this is still hardcoded
                             EffectsEvent::IIRFreqChange(f) => {
                                 // effects[idx[ is a trait object, need to cast it back to what it was or have a generic thing to call to handle events
-                                let fx = &mut self.oscillators[0].effects[idx]; // TODO: need osc idx thing too
+                                let fx = &mut self.oscillators[0].effects[idx];
                                 let fx = fx
 	                                .as_any_mut()
 	                                .downcast_mut::<IIRLowPassFilter>()
 	                                .expect("Downcast failed");
-	                            fx.set_frequency(get_sample_rate(), f, 1.);
+	                            fx.set_frequency(get_sample_rate(), f);
 
                             }
                             EffectsEvent::Enabled(_) => {}
@@ -104,6 +105,7 @@ impl Mixer {
         }
 
 	    advance_sample_clock(chunk_size as u64);
+        let frame_sample_clock = get_sample_clock();
 
         self.chunk_buffer = chunk_summed;
     }

@@ -19,20 +19,22 @@ use tuix::state::themes::DEFAULT_THEME;
 use tuix::*;
 use tuix::{Application, Button, Widget};
 
-use effects::filters::{IIRLowPassFilter, ModulatedFilter};
+use crate::keyboard::MidiKeyboard;
+use crate::state::{get_sample_rate, set_sample_rate};
+use effects::filters::{
+    Filter, FilterType, IIRLowPassFilter, ModulatedFilter, StateVariableTPTFilter,
+};
 use effects::lfo::{Lfo, LfoType};
 use effects::{set_effects_sample_rate, Effect};
 use std::sync::Mutex;
-use crate::keyboard::MidiKeyboard;
-use crate::state::set_sample_rate;
 
 mod gui;
+mod keyboard;
 mod mixer;
 mod playback;
+mod state;
 mod synths;
 mod utils;
-mod keyboard;
-mod state;
 
 fn main() -> Result<(), anyhow::Error> {
     let (command_sender, command_receiver) = crossbeam_channel::bounded(1024);
@@ -61,19 +63,29 @@ fn start_audio_backend(command_receiver: crossbeam_channel::Receiver<Message>) {
         println!("Default output config: {:?}", config);
         let sample_rate = config.sample_rate();
 
-	    set_sample_rate(sample_rate);
+        set_sample_rate(sample_rate);
 
         let wavetable = Wavetable::create_wavetable(
-            "test_wavs/saw_440.wav".to_string(),
+            "test_wavs/CantinaBand.wav".to_string(),
+            // "test_wavs/saw_440.wav".to_string(),
             config.sample_rate().0,
         );
         let mut osc = Oscillator::new(0.2, 1440., wavetable);
+        // osc.add_effect(Box::new(StateVariableTPTFilter::new(get_sample_rate(), 500., FilterType::LowPass)));
         //osc.add_effect(Box::new(IIRLowPassFilter::new_low_pass(get_sample_rate(), 2000., 1.)));
-        // osc.add_effect(Box::new(ModulatedFilter::new(
-        //     Lfo::new(LfoType::Sine, 100., 1.),
-        //     IIRLowPassFilter::new_low_pass(get_sample_rate(), 2000., 1.),
-        //     2000.,
-        // )));
+        osc.add_effect(Box::new(ModulatedFilter::new(
+            // TODO: frequency is all weird now since it gets chunked
+            //       it's only calcing the LFO for the _sample time at chunk request_
+            //       need to advance it into the future like we did for adsr too
+            Lfo::new(LfoType::Sine, 0.1, 1.),
+            // Filter::IIRLowPassFilter(IIRLowPassFilter::new_low_pass(get_sample_rate(), 2000., 1.)),
+            Filter::StateVariableTPTFilter(StateVariableTPTFilter::new(
+                get_sample_rate(),
+                1000.,
+                FilterType::LowPass,
+            )),
+            2000.,
+        )));
 
         let wavetable2 =
             Wavetable::create_wavetable("test_wavs/sine.wav".to_string(), config.sample_rate().0);
@@ -101,7 +113,6 @@ fn start_gui(command_sender: crossbeam_channel::Sender<Message>) {
             .set_title("basic")
             .set_background_color(state, Color::rgb(55, 255, 255))
             .set_align_items(state, AlignItems::FlexStart);
-
 
         let controller =
             Controller::new(command_sender.clone())

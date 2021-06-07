@@ -5,6 +5,8 @@ use once_cell::sync::Lazy;
 use effects::set_effects_sample_rate;
 use std::borrow::{BorrowMut, Borrow};
 
+// TODO: refactor this gnarly thing, perhaps into an Context instance that
+//       gets passed around?
 #[derive(Debug)]
 pub struct State {
     pub sample_rate: SampleRate,
@@ -37,7 +39,7 @@ pub fn get_sample_rate() -> f32 {
 }
 
 pub fn advance_sample_clock(sample_count: u64) {
-    STATE.lock().unwrap().sample_clock = sample_count;
+    STATE.lock().unwrap().sample_clock += sample_count;
 }
 
 pub fn get_sample_clock() -> u64 {

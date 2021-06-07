@@ -1,18 +1,19 @@
-//! IIR Filter, mostly adapted from oxcable and JUCE
+//! Filters, mostly adapted from oxcable and JUCE
 use crate::{get_sample_rate, Effect};
 use std::any::Any;
 use std::f32::consts::PI;
 
 use crate::lfo::Lfo;
+use num_traits::FloatConst;
 
 pub struct ModulatedFilter {
     lfo: Lfo,
-    filter: IIRLowPassFilter,
+    filter: Filter,
     base_frequency: f32,
 }
 
 impl ModulatedFilter {
-    pub fn new(lfo: Lfo, filter: IIRLowPassFilter, base_frequency: f32) -> ModulatedFilter {
+    pub fn new(lfo: Lfo, filter: Filter, base_frequency: f32) -> ModulatedFilter {
         ModulatedFilter {
             lfo,
             filter,
@@ -24,13 +25,16 @@ impl ModulatedFilter {
 impl Effect for ModulatedFilter {
     fn process_samples(&mut self, sample_clock: u64, samples: &mut [f32]) {
         let freq = self.base_frequency * self.lfo.get_sample(sample_clock, 1.0, 20_000.0);
-        self.filter.set_frequency(
-            get_sample_rate(),
-            freq,
-            1.,
-        );
-        self.filter.process_samples(sample_clock, samples);
-	    // samples.iter().for_each(|s| println!("{}", s));
+        match &mut self.filter {
+            Filter::IIRLowPassFilter(filter) => {
+                filter.set_frequency(get_sample_rate(), freq);
+                filter.process_samples(sample_clock, samples);
+            }
+            Filter::StateVariableTPTFilter(filter) => {
+                filter.set_frequency(get_sample_rate(), freq);
+                filter.process_samples(sample_clock, samples);
+            }
+        }
     }
 
     fn as_any(&self) -> &dyn Any {
@@ -40,10 +44,99 @@ impl Effect for ModulatedFilter {
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
-
 }
 
-// TODO: future work, use a filter that's more friendly to modulation
+pub enum Filter {
+    IIRLowPassFilter(IIRLowPassFilter),
+    StateVariableTPTFilter(StateVariableTPTFilter),
+}
+
+pub enum FilterType {
+    LowPass,
+    HighPass,
+    BandPass,
+}
+
+pub struct StateVariableTPTFilter {
+    g: f32,
+    h: f32,
+    r2: f32,
+    s1: Vec<f32>,
+    s2: Vec<f32>,
+
+    filter_type: FilterType,
+    cutoff_frequency: f32,
+    resonance: f32,
+
+    channels: u16,
+}
+
+impl StateVariableTPTFilter {
+    pub fn new(
+        sample_rate: f32,
+        cutoff_frequency: f32,
+        filter_type: FilterType,
+    ) -> StateVariableTPTFilter {
+        let mut s = StateVariableTPTFilter {
+            g: 0.0,
+            h: 0.0,
+            r2: 0.0,
+            s1: vec![2., 2.], // TODO: these are supposed be as big as # of channels (?)
+            s2: vec![2., 2.],
+            filter_type,
+            cutoff_frequency,
+            resonance: 1.0 / f32::sqrt(2.0),
+            channels: 1,
+        };
+        s.set_frequency(sample_rate, cutoff_frequency);
+        s
+    }
+
+    pub fn set_frequency(&mut self, sample_rate: f32, new_frequency: f32) {
+        self.cutoff_frequency = new_frequency;
+
+        self.g = (f32::PI() * self.cutoff_frequency / sample_rate).tan();
+        self.r2 = 1.0 / self.resonance;
+        self.h = 1.0 / (1.0 + self.r2 * self.g + self.g * self.g);
+    }
+}
+
+impl Effect for StateVariableTPTFilter {
+    fn process_samples(&mut self, samples_clock: u64, samples: &mut [f32]) {
+        for i in 0..samples.len() {
+            let Self {
+                g, r2, channels, h, ..
+            } = *self;
+            let channels = channels as usize - 1;
+
+            let ls1 = self.s1[channels];
+            let ls2 = self.s1[channels];
+
+            let yhp = h * (samples[i] - ls1 * (g * r2) - ls2);
+
+            let ybp = yhp * g + ls1;
+            self.s1[channels] = yhp * g + ybp;
+
+            let ylp = ybp * g + ls2;
+            self.s2[channels] = ybp * g + ylp;
+
+            samples[i] = match self.filter_type {
+                FilterType::LowPass => ylp,
+                FilterType::HighPass => ybp,
+                FilterType::BandPass => yhp,
+            }
+        }
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+}
+
 pub struct IIRLowPassFilter {
     v1: f32,
     v2: f32,
@@ -71,7 +164,8 @@ impl IIRLowPassFilter {
         }
     }
 
-    pub fn set_frequency(&mut self, sample_rate: f32, frequency: f32, q: f32) {
+    pub fn set_frequency(&mut self, sample_rate: f32, frequency: f32) {
+        let q = 1.0;
         let n = 1. / (PI * frequency / sample_rate).tan();
         let n_squared = n * n;
         let c1_base = 1. / (1. + 1. / q * n + n_squared);
@@ -115,7 +209,7 @@ impl IIRLowPassFilter {
 }
 
 impl Effect for IIRLowPassFilter {
-    fn process_samples(&mut self, sample_clock: u64, samples: &mut [f32]) {
+    fn process_samples(&mut self, samples_clock: u64, samples: &mut [f32]) {
         let IIRLowPassFilter {
             v1,
             v2,
@@ -150,5 +244,4 @@ impl Effect for IIRLowPassFilter {
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
-
 }

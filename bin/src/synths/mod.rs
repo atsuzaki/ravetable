@@ -133,7 +133,7 @@ impl Oscillator {
 
         let current_sample = value0 + frac * (value1 - value0);
 
-        self.current_index += self.table_delta; // todo: keep everything as is, but modify table_delta based on last_pos shit?
+        self.current_index += self.table_delta;
         let new_index = self.current_index;
 
         if new_index > self.table_size_index as f32 {
@@ -158,7 +158,7 @@ impl Oscillator {
         self.wavetable.spec.channels
     }
 
-    // Not sure if this is exactly the correct way but this seems to produce what'm after
+    // Not sure if this is exactly the correct way but this seems to produce what I'm after
     // have an assumed frq: 440
     // take diff of assumed frq and asked frq, calc the diff and translate it to table_delta
     fn update_table_delta(&mut self) {
@@ -171,11 +171,12 @@ impl Oscillator {
 
     fn update_low_pass_filter(&mut self) {
         // Internal low pass filter we use for clamping is always index 0, since we always add it first
+        // TODO: Rather jank, consider to fix it
         self.effects[0]
             .as_any_mut()
             .downcast_mut::<IIRLowPassFilter>()
             .unwrap()
-            .set_frequency(get_sample_rate(), self.frequency * CLAMP_COEFF, 1.);
+            .set_frequency(get_sample_rate(), self.frequency * CLAMP_COEFF);
     }
 
     pub fn set_gain(&mut self, new_gain: f32) {
