@@ -17,7 +17,6 @@ use crate::synths::{Oscillator, Wavetable};
 use std::thread;
 use tuix::state::themes::DEFAULT_THEME;
 use tuix::*;
-use tuix::{Application, Button, Widget};
 
 use crate::keyboard::MidiKeyboard;
 use crate::state::{get_sample_rate, set_sample_rate};
@@ -26,7 +25,6 @@ use effects::filters::{
 };
 use effects::lfo::{Lfo, LfoType};
 use effects::{set_effects_sample_rate, Effect};
-use std::sync::Mutex;
 
 mod gui;
 mod keyboard;
@@ -66,19 +64,17 @@ fn start_audio_backend(command_receiver: crossbeam_channel::Receiver<Message>) {
         set_sample_rate(sample_rate);
 
         let wavetable = Wavetable::create_wavetable(
-            "test_wavs/CantinaBand.wav".to_string(),
-            // "test_wavs/saw_440.wav".to_string(),
+            // "test_wavs/CantinaBand.wav".to_string(),
+            "test_wavs/saw_440.wav".to_string(),
             config.sample_rate().0,
         );
-        let mut osc = Oscillator::new(0.2, 1440., wavetable);
-        // osc.add_effect(Box::new(StateVariableTPTFilter::new(get_sample_rate(), 500., FilterType::LowPass)));
-        //osc.add_effect(Box::new(IIRLowPassFilter::new_low_pass(get_sample_rate(), 2000., 1.)));
+        let mut osc = Oscillator::new(0.5, 1440., wavetable);
+        // osc.add_effect(Box::new(IIRLowPassFilter::new_low_pass(get_sample_rate(), 2000., 1.)));
         osc.add_effect(Box::new(ModulatedFilter::new(
             // TODO: frequency is all weird now since it gets chunked
             //       it's only calcing the LFO for the _sample time at chunk request_
             //       need to advance it into the future like we did for adsr too
-            Lfo::new(LfoType::Sine, 0.1, 1.),
-            // Filter::IIRLowPassFilter(IIRLowPassFilter::new_low_pass(get_sample_rate(), 2000., 1.)),
+            Lfo::new(LfoType::Sine, 0.5, 1.),
             Filter::StateVariableTPTFilter(StateVariableTPTFilter::new(
                 get_sample_rate(),
                 1000.,
@@ -89,7 +85,7 @@ fn start_audio_backend(command_receiver: crossbeam_channel::Receiver<Message>) {
 
         let wavetable2 =
             Wavetable::create_wavetable("test_wavs/sine.wav".to_string(), config.sample_rate().0);
-        let osc2 = Oscillator::new(0.01, 600., wavetable2);
+        let osc2 = Oscillator::new(0.2, 600., wavetable2);
 
         let mixer = Mixer::new(vec![osc, osc2]);
 
@@ -111,29 +107,29 @@ fn start_gui(command_sender: crossbeam_channel::Sender<Message>) {
 
         window
             .set_title("basic")
-            .set_background_color(state, Color::rgb(55, 255, 255))
+            .set_background_color(state, Color::rgb(17, 21, 22))
             .set_align_items(state, AlignItems::FlexStart);
 
         let controller =
             Controller::new(command_sender.clone())
                 .build(state, window.entity(), |builder| builder);
 
-        let _one = Element::new().build(state, window.entity(), |builder| {
-            builder
-                .class("one")
-                .set_background_gradient(
-                    LinearGradient::new(Direction::TopToBottom)
-                        .add_stop(GradientStop::new(
-                            Units::Pixels(0.0),
-                            Color::rgb(190, 90, 190),
-                        ))
-                        .add_stop(GradientStop::new(
-                            Units::Pixels(30.0),
-                            Color::rgb(50, 50, 50),
-                        )),
-                )
-                .set_text("Button")
-        });
+        // let _one = Element::new().build(state, window.entity(), |builder| {
+        //     builder
+        //         .class("one")
+        //         .set_background_gradient(
+        //             LinearGradient::new(Direction::TopToBottom)
+        //                 .add_stop(GradientStop::new(
+        //                     Units::Pixels(0.0),
+        //                     Color::rgb(190, 90, 190),
+        //                 ))
+        //                 .add_stop(GradientStop::new(
+        //                     Units::Pixels(30.0),
+        //                     Color::rgb(50, 50, 50),
+        //                 )),
+        //         )
+        //         .set_text("Button")
+        // });
     });
 
     app.run();

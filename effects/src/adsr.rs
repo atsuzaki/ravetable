@@ -1,3 +1,4 @@
+#[derive(Clone, Copy)]
 pub struct ADSR {
     pub delay: f32,
     pub attack: f32,
@@ -10,10 +11,10 @@ impl Default for ADSR {
     fn default() -> Self {
         ADSR {
             delay: 0.0,
-            attack: 1500.0,
+            attack: 15.0,
             decay: 15.0,
             sustain: 1.0,
-            release: 150000.0,
+            release: 500.0,
         }
     }
 }
