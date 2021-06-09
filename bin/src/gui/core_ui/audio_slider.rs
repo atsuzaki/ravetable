@@ -7,6 +7,8 @@ pub struct AudioSlider {
     min: f32,
     max: f32,
 
+    on_change: Option<Box<dyn Fn(f32) -> Event>>,
+
     // Components
     slider: Entity,
     textbox: Entity,
@@ -19,9 +21,18 @@ impl AudioSlider {
             value: starting_value,
             min,
             max,
+            on_change: None,
             slider: Entity::null(),
             textbox: Entity::null(),
         }
+    }
+
+    pub fn on_change<F>(mut self, message: F) -> Self
+        where
+            F: 'static + Fn(f32) -> Event,
+    {
+        self.on_change = Some(Box::new(message));
+        self
     }
 }
 
@@ -53,7 +64,7 @@ impl Widget for AudioSlider {
             .build(state, slider_container, |builder| builder);
 
         // TODO: Textbox doesn't update slider right now, I can't even set it to not focusable to
-        //       disable it since it inteferes with the slider for some reason.
+        //       disable it since it interferes with the slider for some reason.
         //       Trying to handle the events for textbox runs into fun weird mess,
         //       I think it's being worked on, might be working in experiment branch?
         self.textbox = Textbox::new(&format!("{:.1}", &self.value)).build(state, container, |builder| {
@@ -72,6 +83,18 @@ impl Widget for AudioSlider {
                 SliderEvent::ValueChanged(v) => {
                     if event.target == self.slider {
                         self.value = *v;
+
+                        if let Some(on_change) = &self.on_change {
+                            let mut on_change_event = (on_change)(self.value);
+                            on_change_event.origin = entity;
+
+                            if on_change_event.target == Entity::null() {
+                                on_change_event.target = entity;
+                            }
+
+                            state.insert_event(on_change_event);
+                        }
+
                         state.insert_event(
                             Event::new(TextboxEvent::SetValue(format!("{:.1}", &self.value)))
                                 .target(self.textbox)

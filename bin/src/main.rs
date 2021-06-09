@@ -59,8 +59,8 @@ pub enum Message {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EffectsEvent {
-    IIRFreqChange(f32),
-    Enabled(bool),
+    EnvelopeEvent()
+    // Enabled(bool),
 }
 
 pub type CrossbeamReceiver = crossbeam_channel::Receiver<Message>;

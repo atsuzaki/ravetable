@@ -8,7 +8,7 @@ use log::info;
 use tuix::Application;
 use tuix::*;
 
-use crate::gui::events::OscillatorControlEvent;
+use crate::gui::events::{OscillatorControlEvent, EnvelopeControlEvent};
 use crate::synths::Sample;
 use crate::{
     gui::adsr::ADSRControls,
@@ -148,6 +148,15 @@ impl Widget for Controller {
                         ))
                         .unwrap();
                 }
+                _ => {}
+            }
+        }
+
+        if let Some(ev) = event.message.downcast::<EnvelopeControlEvent>() {
+            match ev {
+                EnvelopeControlEvent::AttackChange(id, val) => {
+                    self.command_sender.send(Message::Gain(*id, *val)).unwrap();
+                },
                 _ => {}
             }
         }

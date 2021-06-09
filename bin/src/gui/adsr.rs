@@ -3,8 +3,8 @@ use tuix::*;
 use crate::gui::core_ui::audio_slider::AudioSlider;
 use crate::gui::core_ui::audio_widget::AudioWidgetContainer;
 use crate::gui::core_ui::hdivider::HDivider;
-use crate::gui::events::OscillatorControlEvent;
 use effects::adsr::ADSR;
+use crate::gui::events::EnvelopeControlEvent;
 
 pub struct ADSRControls {
     osc_id: usize,
@@ -39,6 +39,9 @@ impl Widget for ADSRControls {
 
         let slider_max = 32.;
         AudioSlider::new("Attack", 0., slider_max, self.adsr.attack)
+            .on_change( (move |val| {
+                Event::new(EnvelopeControlEvent::AttackChange(id, val))
+            }))
             .build(state, row, |builder| builder);
         AudioSlider::new("Decay", 0., slider_max, self.adsr.decay).build(state, row, |builder| builder);
         AudioSlider::new("Sustain", 0., slider_max, self.adsr.sustain)

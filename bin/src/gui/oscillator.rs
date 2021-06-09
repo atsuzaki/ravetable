@@ -177,9 +177,8 @@ impl Widget for OscillatorControls {
             });
 
         self.frequency_knob = ValueKnob::new("Frequency", 440.0, 0.0, 6000.0) // TODO: supply with actual value osc is initialized with
-            .on_change(move |val| {
-                Event::new(OscillatorControlEvent::OscWavetableChange(id, 5)) // TODO: temp remove when dropdown works
-            }) // TODO: We can set propagation mode too, dont know yet if I wanna do it
+            // .on_change(move |val| {
+            // })
             .build(state, row2, |builder| {
                 builder.set_width(Units::Pixels(50.0))
             });
