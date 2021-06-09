@@ -10,7 +10,6 @@ pub struct ADSRControls {
     osc_id: usize,
 
     adsr: ADSR,
-    // components
 }
 
 impl ADSRControls {

@@ -17,6 +17,7 @@ pub struct Sample {
 
 pub struct Wavetable {
     pub sample_table: Vec<f32>,
+
     // Buffer of samples from .wav file
     pub spec: WavSpec,
     pub sample: Sample,
@@ -212,9 +213,10 @@ impl Oscillator {
     fn update_table_delta(&mut self) {
         let assumed_frq = 10.; // TODO: const this
         let frq_fraq = self.frequency / assumed_frq;
+
         // Assuming that at assumed_frq it needs to move at 1 index per, calc how much table_delta
         // is needed to play at the new frequency
-        self.table_delta = frq_fraq; // ok, changing the table delta will change the speed too.
+        self.table_delta = frq_fraq;
     }
 
     fn update_low_pass_filter(&mut self) {
@@ -225,7 +227,6 @@ impl Oscillator {
             .downcast_mut::<IIRLowPassFilter>()
             .unwrap()
             .set_frequency(get_sample_rate(), 15_000.);
-        // .set_frequency(get_sample_rate(), self.frequency * CLAMP_COEFF);
     }
 
     pub fn set_gain(&mut self, new_gain: f32) {

@@ -1,5 +1,21 @@
 use tuix::Code;
 
+#[derive(Copy, Clone, Debug)]
+pub enum MidiNote {
+    C = 0,
+    Csharp,
+    D,
+    Dsharp,
+    E,
+    F,
+    Fsharp,
+    G,
+    Gsharp,
+    A,
+    Asharp,
+    B,
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct MidiKeyboard {
     octave: i16,
@@ -31,22 +47,6 @@ impl MidiKeyboard {
         let freq = 440. * 2_f32.powf((keypress - 69) as f32 / 12.);
         freq
     }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum MidiNote {
-    C = 0,
-    Csharp,
-    D,
-    Dsharp,
-    E,
-    F,
-    Fsharp,
-    G,
-    Gsharp,
-    A,
-    Asharp,
-    B,
 }
 
 pub fn keyboard_to_midi(keycode: Code) -> Option<MidiNote> {
