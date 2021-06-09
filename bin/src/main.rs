@@ -65,7 +65,8 @@ fn start_audio_backend(command_receiver: crossbeam_channel::Receiver<Message>) {
 
         let wavetable = Wavetable::create_wavetable(
             // "test_wavs/CantinaBand.wav".to_string(),
-            "test_wavs/saw_440.wav".to_string(),
+            //"test_wavs/saw_440.wav".to_string(),
+            "test_wavs/wavetable/chiptune_pulse.wav".to_string(),
             config.sample_rate().0,
         );
         let mut osc = Oscillator::new(0.5, 1440., wavetable);
@@ -84,8 +85,8 @@ fn start_audio_backend(command_receiver: crossbeam_channel::Receiver<Message>) {
         )));
 
         let wavetable2 =
-            Wavetable::create_wavetable("test_wavs/sine.wav".to_string(), config.sample_rate().0);
-        let osc2 = Oscillator::new(0.2, 600., wavetable2);
+            Wavetable::create_wavetable("test_wavs/wavetable/organ.wav".to_string(), config.sample_rate().0);
+        let osc2 = Oscillator::new(0.2, 440., wavetable2);
 
         let mixer = Mixer::new(vec![osc, osc2]);
 

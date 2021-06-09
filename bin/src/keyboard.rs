@@ -8,7 +8,7 @@ pub struct MidiKeyboard {
 impl MidiKeyboard {
 	pub fn new() -> Self {
 		MidiKeyboard {
-			octave: 5
+			octave: 3
 		}
 	}
 

@@ -92,7 +92,7 @@ impl Oscillator {
 
         osc.add_effect(Box::new(IIRLowPassFilter::new_low_pass(
             get_sample_rate(),
-            frequency * CLAMP_COEFF,
+            (frequency * CLAMP_COEFF).max(5000f32),
             1.,
         )));
         osc.update_table_delta();
@@ -159,10 +159,10 @@ impl Oscillator {
     }
 
     // Not sure if this is exactly the correct way but this seems to produce what I'm after
-    // have an assumed frq: 440
+    // have an assumed frq: 1
     // take diff of assumed frq and asked frq, calc the diff and translate it to table_delta
     fn update_table_delta(&mut self) {
-        let assumed_frq = 440.; // TODO: const this
+        let assumed_frq = 10.; // TODO: const this
         let frq_fraq = self.frequency / assumed_frq;
         // Assuming that at assumed_frq it needs to move at 1 index per, calc how much table_delta
         // is needed to play at the new frequency

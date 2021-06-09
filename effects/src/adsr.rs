@@ -11,10 +11,10 @@ impl Default for ADSR {
     fn default() -> Self {
         ADSR {
             delay: 0.0,
-            attack: 15.0,
+            attack: 1500.0,
             decay: 15.0,
             sustain: 1.0,
-            release: 500.0,
+            release: 15000.0,
         }
     }
 }
@@ -71,7 +71,6 @@ impl ADSREnvelope {
             ADSREnvelopeState::Attack
         };
 
-        println!("Adsr triggered, new state should be: {:?}", state);
 
         self.change_state(state, sample_time);
     }
