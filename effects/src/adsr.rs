@@ -1,3 +1,6 @@
+//! ADSR envelope adapted from Yazz: https://github.com/icsga/Yazz
+//!
+
 use crate::get_sample_rate;
 
 #[derive(Clone, Copy)]

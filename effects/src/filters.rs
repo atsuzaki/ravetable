@@ -1,4 +1,6 @@
-//! Filters, mostly adapted from oxcable and JUCE
+//! Assorted filters, mostly adapted from oxcable: https://github.com/oxcable/oxcable
+//!   and JUCE: https://juce.com/
+
 use crate::{get_sample_rate, Effect};
 use std::any::Any;
 use std::f32::consts::PI;
