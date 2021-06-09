@@ -1,22 +1,27 @@
 use hound::WavSpec;
 use itertools::Itertools;
 use samplerate::{ConverterType, Samplerate};
-use std::ptr;
 
 use effects::adsr::{ADSREnvelope, ADSR};
 use effects::filters::IIRLowPassFilter;
 use effects::Effect;
-use crate::state::get_sample_rate;
+use crate::state::{get_sample_rate, get_sample_clock};
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Sample {
+    pub name: String,
+    pub path: String,
+}
 
 pub struct Wavetable {
     pub sample_table: Vec<f32>, // Buffer of samples from .wav file
     pub spec: WavSpec,
-    pub file_path: String,
+    pub sample: Sample,
 }
 
 impl Wavetable {
-    pub fn create_wavetable(filename: String, output_sample_rate: u32) -> Wavetable {
-        let reader = hound::WavReader::open(&filename).unwrap();
+    pub fn create_wavetable(sample: Sample, output_sample_rate: u32) -> Wavetable {
+        let reader = hound::WavReader::open(&sample.path).unwrap();
         let mut input_wav_spec = reader.spec();
 
         let samples = reader.into_samples::<f32>();
@@ -52,7 +57,7 @@ impl Wavetable {
         Wavetable {
             sample_table: fsamples,
             spec: input_wav_spec,
-            file_path: filename,
+            sample,
         }
     }
 
@@ -64,6 +69,21 @@ impl Wavetable {
 
 const CLAMP_COEFF: f32 = 3.;
 
+#[derive(Clone)]
+pub enum EffectStatePacket {
+    // todo
+}
+
+#[derive(Clone)]
+pub struct OscStatePacket {
+    pub name: String,
+    pub gain: f32,
+    pub frequency: f32,
+
+    pub adsr: ADSR,
+    pub effects: Vec<EffectStatePacket>,
+}
+
 pub struct Oscillator {
     gain: f32,
     frequency: f32,
@@ -74,6 +94,7 @@ pub struct Oscillator {
     pub wavetable: Wavetable,
     pub effects: Vec<Box<dyn Effect + Send>>,
     envelope: ADSREnvelope,
+	upcoming_sample_change: Option<Sample>,
 }
 
 impl Oscillator {
@@ -88,6 +109,7 @@ impl Oscillator {
             table_delta: 0.,
             effects: vec![],
             envelope: ADSREnvelope::new(ADSR::default()),
+            upcoming_sample_change: None
         };
 
         osc.add_effect(Box::new(IIRLowPassFilter::new_low_pass(
@@ -97,6 +119,32 @@ impl Oscillator {
         )));
         osc.update_table_delta();
         osc
+    }
+
+	pub fn queue_change_wavetable(&mut self, sample: Sample) {
+		self.upcoming_sample_change = Some(sample);
+		self.envelope.release(get_sample_clock());
+	}
+
+	fn change_wavetable(&mut self) { //TODO: Call this from somewhere if adsr finishes
+
+		let new_wavetable = Wavetable::create_wavetable(self.upcoming_sample_change.take().expect("Couldn't find wavetable to swap"), get_sample_rate() as u32);
+		self.table_size_index = &new_wavetable.get_num_samples() - 1;
+		self.wavetable = new_wavetable;
+		self.current_index = 0.; //why is this f32 lol
+		self.table_delta = 0.;
+
+		self.update_table_delta();
+	}
+
+    pub fn get_state_packet(&self) -> OscStatePacket {
+        OscStatePacket {
+            name: self.wavetable.sample.name.clone(),
+            gain: self.gain,
+            frequency: self.frequency,
+            adsr: self.envelope.adsr_values,
+            effects: Vec::new(),  //self.effects.map(|e| e.get_state_packet()) TODO
+        }
     }
 
     pub fn add_effect(&mut self, effect: Box<dyn Effect + Send>) {
@@ -118,6 +166,11 @@ impl Oscillator {
 
     #[inline(always)]
     pub fn get_next_sample(&mut self, sample_time: u64) -> f32 {
+	    //swap wavetable if we have one queued and adsr has ended
+	    if self.upcoming_sample_change.is_some() && !self.envelope.is_active() {
+		    self.change_wavetable();
+	    }
+
         //println!("{}", sample_time);
         let index0 = self.current_index as usize;
         let index1 = if index0 == self.table_size_index {

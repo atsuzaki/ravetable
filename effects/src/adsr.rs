@@ -1,3 +1,5 @@
+use crate::get_sample_rate;
+
 #[derive(Clone, Copy)]
 pub struct ADSR {
     pub delay: f32,
@@ -11,10 +13,34 @@ impl Default for ADSR {
     fn default() -> Self {
         ADSR {
             delay: 0.0,
-            attack: 1500.0,
-            decay: 15.0,
-            sustain: 1.0,
-            release: 15000.0,
+            attack: 10000.,
+            decay: 5000.,
+            sustain: 100000.0,
+            release: 100000.,
+        }
+    }
+}
+
+impl ADSR {
+    pub fn convert_adsr_from_sample_clock(adsr: &ADSR) -> ADSR {
+        let sample_rate = get_sample_rate();
+        ADSR {
+            delay: adsr.delay / sample_rate,
+            attack: adsr.attack / sample_rate,
+            decay: adsr.decay / sample_rate,
+            sustain: adsr.sustain / sample_rate,
+            release: adsr.release / sample_rate,
+        }
+    }
+
+    pub fn convert_adsr_from_time(adsr: &ADSR) -> ADSR {
+        let sample_rate = get_sample_rate();
+        ADSR {
+            delay: adsr.delay * sample_rate,
+            attack: adsr.attack * sample_rate,
+            decay: adsr.decay * sample_rate,
+            sustain: adsr.sustain * sample_rate,
+            release: adsr.release * sample_rate,
         }
     }
 }
@@ -30,7 +56,7 @@ pub enum ADSREnvelopeState {
 }
 
 pub struct ADSREnvelope {
-    adsr_values: ADSR,
+    pub adsr_values: ADSR,
     state: ADSREnvelopeState,
 
     start_time: u64,

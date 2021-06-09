@@ -3,7 +3,6 @@ use crate::keyboard::MidiKeyboard;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 use effects::set_effects_sample_rate;
-use std::borrow::{BorrowMut, Borrow};
 
 // TODO: refactor this gnarly thing, perhaps into an Context instance that
 //       gets passed around?

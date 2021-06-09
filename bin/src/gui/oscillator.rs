@@ -1,9 +1,10 @@
 use crate::gui::adsr::ADSRControls;
 use crate::gui::events::OscillatorControlEvent;
 use crate::gui::AudioWidget;
+use crate::synths::{OscStatePacket, Sample};
 use effects::adsr::ADSR;
-use tuix::*;
 use itertools::Itertools;
+use tuix::*;
 
 const DUMMY_WIDGETS_LIST: [AudioWidget; 1] = [
     AudioWidget::Adsr,
@@ -11,16 +12,17 @@ const DUMMY_WIDGETS_LIST: [AudioWidget; 1] = [
 ];
 
 pub struct Oscillator {
-    sample_label: String,
-
     id: usize,
+    osc_state: OscStatePacket,
+    available_samples: Vec<Sample>,
 }
 
 impl Oscillator {
-    pub fn new<T: Into<String>>(id: usize, label: T) -> Self {
+    pub fn new(id: usize, osc_state: OscStatePacket, available_samples: Vec<Sample>) -> Self {
         Oscillator {
             id,
-            sample_label: label.into(),
+            osc_state,
+            available_samples,
         }
     }
 }
@@ -40,29 +42,28 @@ impl Widget for Oscillator {
                 .class("oscillator")
         });
 
-        OscillatorControls::new(id, &self.sample_label).build(state, container, |builder| builder);
+        // TODO: these available_samples clonings are severely bothering me, borrow instead later
+        OscillatorControls::new(
+            id,
+            &self.osc_state.name,
+            self.osc_state.gain,
+            self.available_samples.clone(),
+        )
+        .build(state, container, |builder| builder);
 
         let widget_rack = HBox::new().build(state, container, |builder| {
             builder.set_flex_direction(FlexDirection::Column)
             // .class("oscillator")
         });
 
-        // Would normally flex-wrap here instead of doing this weird calculated row thing
-        //  but it is not implemented yet in tuix.
-        // let widget_rack_rows_count = DUMMY_WIDGETS_LIST.len() / 2;
-        // let widget_rack_rows = [0..widget_rack_rows_count].iter().map(|_| {
-        //     HBox::new().build(state, widget_rack, |builder| {
-        //         // TODO: ideally make a css class for this
-        //         builder.set_flex_direction(FlexDirection::Column)
-        //                 .set_justify_content(JustifyContent::SpaceEvenly)
-        //                 .set_min_width(Units::Pixels(200.)) // TODO
-        //     })
-        // }).collect_vec();
-
         for widget in std::array::IntoIter::new(DUMMY_WIDGETS_LIST) {
             match widget {
                 AudioWidget::Adsr => {
-                    ADSRControls::new(id, adsr).build(state, widget_rack, |builder| builder);
+                    ADSRControls::new(id, self.osc_state.adsr).build(
+                        state,
+                        widget_rack,
+                        |builder| builder,
+                    );
                 }
                 AudioWidget::Lfo => {}
                 AudioWidget::IIRFilter => {}
@@ -78,18 +79,29 @@ pub struct OscillatorControls {
 
     // data
     sample_label: String,
+    available_samples: Vec<Sample>,
+    gain: f32,
 
     // components
+    pub label: Entity,
     pub gain_knob: Entity,
     pub frequency_knob: Entity,
     pub active_toggle: Entity,
 }
 
 impl OscillatorControls {
-    pub fn new<T: Into<String>>(id: usize, label: T) -> Self {
+    pub fn new<T: Into<String>>(
+        id: usize,
+        label: T,
+        gain: f32,
+        available_samples: Vec<Sample>,
+    ) -> Self {
         OscillatorControls {
             id,
             sample_label: label.into(),
+            available_samples,
+            gain,
+            label: Entity::null(),
             gain_knob: Entity::null(),
             frequency_knob: Entity::null(),
             active_toggle: Entity::null(),
@@ -125,13 +137,34 @@ impl Widget for OscillatorControls {
                 .set_border_color(Color::black())
         });
 
-        Label::new(&self.sample_label).build(state, row, |builder| {
+        // TODO: need a component or whatever
+        let (_, _, dropdown) = Dropdown::new(&self.sample_label).build(state, row, |b| {
+            b.set_height(Units::Pixels(30.0))
+                .set_width(Units::Pixels(175.))
+        });
+        let options = List::new().build(state, dropdown, |b| b);
+        // let options = RadioList::new().build(state, dropdown, |b| b);
+        self.available_samples.iter().enumerate().for_each(|(idx, sample)| {
+            CheckButton::new(false)
+                .on_checked(
+                    Event::new(OscillatorControlEvent::OscWavetableChange(id, idx))
+                )
+                .build(state, options, |b| {
+                    b.set_text(&sample.name)
+                        .set_color(Color::blue()) // TODO: these needs color? or dropdown needs to be a darker color really
+                        .set_height(Pixels(30.0))
+                        .set_width(Units::Pixels(175.))
+                        .set_margin_left(Pixels(5.0))
+                });
+        });
+
+        self.label = Label::new(&self.sample_label).build(state, row, |builder| {
             builder
                 .set_text_justify(Justify::Center)
                 .set_width(Units::Pixels(50.0))
         });
 
-        self.gain_knob = ValueKnob::new("Gain", 1.0, 0.0, 1.0)
+        self.gain_knob = ValueKnob::new("Gain", self.gain, 0.0, 1.0)
             .on_change(move |val| Event::new(OscillatorControlEvent::GainChange(id, val)))
             .build(state, row2, |builder| {
                 builder.set_width(Units::Pixels(50.0))
@@ -139,7 +172,7 @@ impl Widget for OscillatorControls {
 
         self.frequency_knob = ValueKnob::new("Frequency", 440.0, 0.0, 6000.0) // TODO: supply with actual value osc is initialized with
             .on_change(move |val| {
-                Event::new(OscillatorControlEvent::FreqChange(id, val)).direct(entity)
+                Event::new(OscillatorControlEvent::OscWavetableChange(id, 5)) // TODO: temp remove when dropdown works
             }) // TODO: We can set propagation mode too, dont know yet if I wanna do it
             .build(state, row2, |builder| {
                 builder.set_width(Units::Pixels(50.0))
@@ -148,5 +181,19 @@ impl Widget for OscillatorControls {
         entity
     }
 
-    fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {}
+    fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
+        if let Some(ev) = event.message.downcast::<OscillatorControlEvent>() {
+            match ev {
+                OscillatorControlEvent::OscWavetableChange(idx, sample_idx) => {
+                    if self.id == *idx {
+                        let label = &self.available_samples[*sample_idx].name;
+
+                        self.sample_label = label.to_string();
+                        self.label.set_text(state, label);
+                    }
+                },
+                _ => {},
+            }
+        }
+    }
 }

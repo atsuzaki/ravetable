@@ -2,7 +2,14 @@ use crate::{synths::Oscillator, Message, EffectsEvent};
 use log::{error, warn};
 use itertools::Itertools;
 use effects::filters::IIRLowPassFilter;
+
 use crate::state::{get_sample_clock, get_sample_rate, advance_sample_clock};
+use crate::synths::OscStatePacket;
+
+#[derive(Clone)]
+pub struct MixerStatePacket {
+    pub oscillators: Vec<OscStatePacket>
+}
 
 pub struct Mixer {
     pub channels: u16,
@@ -52,8 +59,8 @@ impl Mixer {
                     Message::Frequency(frq) => {
                         self.oscillators.iter_mut().for_each(|o| o.set_frequency(frq));
                     }
-                    Message::Amplitude(gain) => {
-                        self.oscillators[0].set_gain(gain);
+                    Message::Gain(id, gain) => {
+                        self.oscillators[id].set_gain(gain);
                     }
                     Message::EffectsEvent(idx, event) => {
                         match event {
@@ -71,6 +78,10 @@ impl Mixer {
                             EffectsEvent::Enabled(_) => {}
                         }
                     }
+	                Message::OscWavetableChange(idx, sample) => {
+		                self.oscillators[idx].queue_change_wavetable(sample);
+	                }
+                    _ => {}
                 },
                 Err(_) => {} // This happens constantly and only means there was nothing to receive
             }
@@ -124,6 +135,12 @@ impl Mixer {
         self.chunk_buffer_index += 1;
 
         self.chunk_buffer[curr_index]
+    }
+
+    pub fn get_state_packet(&self) -> MixerStatePacket {
+        MixerStatePacket {
+            oscillators: self.oscillators.iter().map( | o| o.get_state_packet()).collect()
+        }
     }
 
 	// pub fn get_next_sample(

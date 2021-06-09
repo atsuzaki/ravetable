@@ -1,8 +1,11 @@
+use crate::synths::Sample;
+
 // id, value
 #[derive(PartialEq, Clone, Debug)]
 pub enum OscillatorControlEvent {
     GainChange(usize, f32),
-    FreqChange(usize, f32)
+    FreqChange(usize, f32),
+    OscWavetableChange(usize, usize)
 }
 
 #[derive(PartialEq, Clone, Debug)]

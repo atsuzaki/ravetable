@@ -56,7 +56,7 @@ impl Widget for AudioSlider {
         //       disable it since it inteferes with the slider for some reason.
         //       Trying to handle the events for textbox runs into fun weird mess,
         //       I think it's being worked on, might be working in experiment branch?
-        self.textbox = Textbox::new(&self.value.to_string()).build(state, container, |builder| {
+        self.textbox = Textbox::new(&format!("{:.1}", &self.value)).build(state, container, |builder| {
             builder
                 .set_width(Units::Pixels(50.0))
                 .set_margin_left(Units::Pixels(8.))
@@ -73,7 +73,7 @@ impl Widget for AudioSlider {
                     if event.target == self.slider {
                         self.value = *v;
                         state.insert_event(
-                            Event::new(TextboxEvent::SetValue(v.round().to_string()))
+                            Event::new(TextboxEvent::SetValue(format!("{:.1}", &self.value)))
                                 .target(self.textbox)
                                 .propagate(Propagation::Direct),
                         );
