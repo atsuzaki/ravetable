@@ -1,14 +1,14 @@
-use crate::{synths::Oscillator, Message, EnvelopeParams};
-use log::{error, warn};
-use itertools::Itertools;
+use crate::{synths::Oscillator, EnvelopeParams, Message, OscParams};
 use effects::filters::IIRLowPassFilter;
+use itertools::Itertools;
+use log::{error, warn};
 
-use crate::state::{get_sample_clock, get_sample_rate, advance_sample_clock};
+use crate::state::{advance_sample_clock, get_sample_clock, get_sample_rate};
 use crate::synths::OscStatePacket;
 
 #[derive(Clone)]
 pub struct MixerStatePacket {
-    pub oscillators: Vec<OscStatePacket>
+    pub oscillators: Vec<OscStatePacket>,
 }
 
 pub struct Mixer {
@@ -36,9 +36,7 @@ impl Mixer {
         }
     }
 
-    fn poll_crossbeam_channel(&mut self,
-                              command_receiver: &crossbeam_channel::Receiver<Message>,
-    ) {
+    fn poll_crossbeam_channel(&mut self, command_receiver: &crossbeam_channel::Receiver<Message>) {
         // Poll crossbeam channel for msg
         self.samples_since_last_gui_poll += 1;
         if self.samples_since_last_gui_poll > 250 {
@@ -47,16 +45,6 @@ impl Mixer {
 
             match command_receiver.try_recv() {
                 Ok(val) => match val {
-                    Message::EnvelopeChange(id, param) => {
-                        let mut osc = &mut self.oscillators[id];
-                        match param {
-                            EnvelopeParams::Delay(val) => osc.envelope.adsr_values.delay = val,
-                            EnvelopeParams::Attack(val) => osc.envelope.adsr_values.attack = val,
-                            EnvelopeParams::Decay(val) => osc.envelope.adsr_values.decay = val,
-                            EnvelopeParams::Sustain(val) => osc.envelope.adsr_values.sustain = val,
-                            EnvelopeParams::Release(val) => osc.envelope.adsr_values.release = val,
-                        }
-                    },
                     Message::Note(note) => {
                         let clock = get_sample_clock();
                         match note {
@@ -66,29 +54,45 @@ impl Mixer {
                         }
                     }
                     Message::Frequency(frq) => {
-                        self.oscillators.iter_mut().for_each(|o| o.set_frequency(frq));
+                        self.oscillators
+                            .iter_mut()
+                            .for_each(|o| o.set_frequency(frq));
                     }
-                    Message::OscGain(id, gain) => {
-                        self.oscillators[id].set_gain(gain);
+                    Message::EnvelopeChange(id, param) => {
+                        let mut osc = &mut self.oscillators[id];
+                        match param {
+                            EnvelopeParams::Delay(val) => osc.envelope.adsr_values.delay = val,
+                            EnvelopeParams::Attack(val) => osc.envelope.adsr_values.attack = val,
+                            EnvelopeParams::Decay(val) => osc.envelope.adsr_values.decay = val,
+                            EnvelopeParams::Sustain(val) => osc.envelope.adsr_values.sustain = val,
+                            EnvelopeParams::Release(val) => osc.envelope.adsr_values.release = val,
+                        }
                     }
+                    Message::OscChange(id, param) => {
+                        let mut osc = &mut self.oscillators[id];
+                        match param {
+                            OscParams::Gain(gain) => osc.set_gain(gain),
+                            OscParams::SampleChange(sample) => {
+                                osc.queue_change_wavetable(sample);
+                            }
+                        }
+                    }
+
                     // Message::EffectsEvent(idx, event) => {
                     //     match event {
                     //         // EffectsEvent::IIRFreqChange(f) => {
                     //         //     // effects[idx[ is a trait object, need to cast it back to what it was or have a generic thing to call to handle events
                     //         //     let fx = &mut self.oscillators[0].effects[idx];
                     //         //     let fx = fx
-	                //         //         .as_any_mut()
-	                //         //         .downcast_mut::<IIRLowPassFilter>()
-	                //         //         .expect("Downcast failed");
-	                //         //     fx.set_frequency(get_sample_rate(), f);
+                    //         //         .as_any_mut()
+                    //         //         .downcast_mut::<IIRLowPassFilter>()
+                    //         //         .expect("Downcast failed");
+                    //         //     fx.set_frequency(get_sample_rate(), f);
                     //         //
                     //         // }
                     //         EffectsEvent::Enabled(_) => {}
                     //     }
                     // }
-	                Message::OscWavetableChange(idx, sample) => {
-		                self.oscillators[idx].queue_change_wavetable(sample);
-	                }
                     _ => {}
                 },
                 Err(_) => {} // This happens constantly and only means there was nothing to receive
@@ -96,9 +100,7 @@ impl Mixer {
         }
     }
 
-    fn get_next_chunk(
-        &mut self,
-    ) {
+    fn get_next_chunk(&mut self) {
         // Add up all the get_next_sample()s from the oscillators, divide by # of osc
         let output_channels = self.channels;
         let chunk_size = self.chunk_size;
@@ -106,24 +108,29 @@ impl Mixer {
         let sample_count = chunk_size;
         let mut chunk_summed: Vec<f32> = Vec::new();
 
-	    let frame_sample_clock = get_sample_clock();
+        let frame_sample_clock = get_sample_clock();
 
-        let chunks = self.oscillators.iter_mut().map(|o| {
-            let mut chunks = o.get_next_chunk(sample_count, frame_sample_clock);
+        let chunks = self
+            .oscillators
+            .iter_mut()
+            .map(|o| {
+                let mut chunks = o.get_next_chunk(sample_count, frame_sample_clock);
 
-            for e in &mut o.effects {
-                e.process_samples(frame_sample_clock, &mut chunks);
-            }
+                for e in &mut o.effects {
+                    e.process_samples(frame_sample_clock, &mut chunks);
+                }
 
-            chunks
-        }).collect_vec();
+                chunks
+            })
+            .collect_vec();
 
         for i in 0..sample_count as usize {
-            let combined_sample = chunks.iter().map(|chunk| chunk[i]).sum::<f32>() / chunks.len() as f32;
+            let combined_sample =
+                chunks.iter().map(|chunk| chunk[i]).sum::<f32>() / chunks.len() as f32;
             chunk_summed.push(combined_sample);
         }
 
-	    advance_sample_clock(chunk_size as u64);
+        advance_sample_clock(chunk_size as u64);
         let frame_sample_clock = get_sample_clock();
 
         self.chunk_buffer = chunk_summed;
@@ -147,29 +154,33 @@ impl Mixer {
 
     pub fn get_state_packet(&self) -> MixerStatePacket {
         MixerStatePacket {
-            oscillators: self.oscillators.iter().map( | o| o.get_state_packet()).collect()
+            oscillators: self
+                .oscillators
+                .iter()
+                .map(|o| o.get_state_packet())
+                .collect(),
         }
     }
 
-	// pub fn get_next_sample(
-	// 	&mut self,
-	// 	command_receiver: &crossbeam_channel::Receiver<Message>,
-	// ) -> f32 {
-	// 	self.poll_crossbeam_channel(command_receiver);
+    // pub fn get_next_sample(
+    // 	&mut self,
+    // 	command_receiver: &crossbeam_channel::Receiver<Message>,
+    // ) -> f32 {
+    // 	self.poll_crossbeam_channel(command_receiver);
     //
-	// 	// Add up all the get_next_sample()s from the oscillators, divide by # of osc
-	// 	let output_channels = self.channels;
-	// 	let unclamped = self
-	// 		.oscillators
-	// 		.iter_mut()
-	// 		.fold(0., |accum, o| match output_channels {
-	// 			// All samples are stereo-fied and here we work under such assumptions
-	// 			1 => accum + ((o.get_next_sample() + o.get_next_sample()) / 2.),
-	// 			_ => accum + o.get_next_sample(),
-	// 		})
-	// 		/ (self.oscillators.len() as f32);
+    // 	// Add up all the get_next_sample()s from the oscillators, divide by # of osc
+    // 	let output_channels = self.channels;
+    // 	let unclamped = self
+    // 		.oscillators
+    // 		.iter_mut()
+    // 		.fold(0., |accum, o| match output_channels {
+    // 			// All samples are stereo-fied and here we work under such assumptions
+    // 			1 => accum + ((o.get_next_sample() + o.get_next_sample()) / 2.),
+    // 			_ => accum + o.get_next_sample(),
+    // 		})
+    // 		/ (self.oscillators.len() as f32);
     //
-	// 	// TODO: make better limiter
-	// 	unclamped.clamp(-1.0f32, 1.0f32)
-	// }
+    // 	// TODO: make better limiter
+    // 	unclamped.clamp(-1.0f32, 1.0f32)
+    // }
 }

@@ -132,32 +132,15 @@ impl Widget for Controller {
                 _ => {}
             }
         }
-
-        if let Some(ev) = event.message.downcast::<OscillatorControlEvent>() {
-            match ev {
-                OscillatorControlEvent::GainChange(id, val) => {
-                    self.command_sender.send(Message::OscGain(*id, *val)).unwrap();
-                }
-                OscillatorControlEvent::OscWavetableChange(id, sample_idx) => {
-                    self.command_sender
-                        .send(Message::OscWavetableChange(
-                            *id,
-                            self.available_samples[*sample_idx].clone(),
-                        ))
-                        .unwrap();
-                }
-                _ => {}
-            }
-        }
-
-        // TODO: this SynthControlEvent -> crossbeam messages conversion could very easily be implemented as From<T>
+        // TODO: this SynthControlEvent -> crossbeam messages conversion could probably be implemented as From<T>
+        //       also not happy with the cloning
         if let Some(ev) = event.message.downcast::<SynthControlEvent>() {
             match ev {
                 SynthControlEvent::OscillatorControl(id, val) => {
-                    self.command_sender.send(Message::OscChange(*id, *val)).unwrap();
+                    self.command_sender.send(Message::OscChange(*id, val.clone())).unwrap();
                 },
                 SynthControlEvent::Envelope(id, val) => {
-                    self.command_sender.send(Message::EnvelopeChange(*id, *val)).unwrap();
+                    self.command_sender.send(Message::EnvelopeChange(*id, val.clone())).unwrap();
                 },
                 _ => {}
             }

@@ -157,7 +157,7 @@ impl ADSREnvelope {
             ADSREnvelopeState::Idle => self.last_value = 0.,
             ADSREnvelopeState::Delay => {
                 self.last_value = 0.;
-                self.end_time = sample_time + self.adsr_values.decay as u64;
+                self.end_time = sample_time + self.adsr_values.delay as u64;
             },
             ADSREnvelopeState::Attack => {
                 self.set_increment(0., 1., self.adsr_values.attack);

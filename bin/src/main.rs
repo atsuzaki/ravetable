@@ -48,13 +48,13 @@ struct Opt {
 }
 
 // Wish I had typescript union/intersections for defining these
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum OscParams {
     Gain(f32),
-    SampleChange(f32)
+    SampleChange(Sample),
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum EnvelopeParams {
     Delay(f32),
     Attack(f32),
@@ -67,20 +67,10 @@ pub enum EnvelopeParams {
 pub enum Message {
     Note(f32),
     Frequency(f32),
-    OscGain(usize, f32),
-    OscWavetableChange(usize, Sample),
 
     OscChange(usize, OscParams),
     EnvelopeChange(usize, EnvelopeParams),
-
-    // EffectsEvent(usize, EffectsEvent),
 }
-
-// #[derive(Clone, Copy, Debug, PartialEq)]
-// pub enum EffectsEvent {
-    // EnvelopeEvent()
-    // Enabled(bool),
-// }
 
 pub type CrossbeamReceiver = crossbeam_channel::Receiver<Message>;
 pub type CrossbeamSender = crossbeam_channel::Sender<Message>;

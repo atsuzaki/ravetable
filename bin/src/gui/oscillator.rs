@@ -1,7 +1,9 @@
 use crate::gui::adsr::ADSRControls;
-use crate::gui::events::OscillatorControlEvent;
+use crate::gui::events::{OscillatorControlEvent, SynthControlEvent};
 use crate::gui::AudioWidget;
 use crate::synths::{OscStatePacket, Sample};
+use crate::OscParams;
+use crate::OscParams::Gain;
 use effects::adsr::ADSR;
 use itertools::Itertools;
 use tuix::*;
@@ -32,9 +34,6 @@ impl Widget for Oscillator {
 
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
         let id = self.id;
-
-        // TODO: all these data to be replaced with real data
-        let adsr = ADSR::default();
 
         let container = HBox::new().build(state, entity, |builder| {
             builder
@@ -150,19 +149,23 @@ impl Widget for OscillatorControls {
         });
         let options = List::new().build(state, dropdown, |b| b);
         // let options = RadioList::new().build(state, dropdown, |b| b);
-        self.available_samples.iter().enumerate().for_each(|(idx, sample)| {
-            CheckButton::new(false)
-                .on_checked(
-                    Event::new(OscillatorControlEvent::OscWavetableChange(id, idx))
-                )
-                .build(state, options, |b| {
-                    b.set_text(&sample.name)
-                        .set_color(Color::blue()) // TODO: these needs color? or dropdown needs to be a darker color really
-                        .set_height(Pixels(30.0))
-                        .set_width(Units::Pixels(175.))
-                        .set_margin_left(Pixels(5.0))
-                });
-        });
+        self.available_samples
+            .iter()
+            .enumerate()
+            .for_each(|(idx, sample)| {
+                CheckButton::new(false)
+                    .on_checked(Event::new(SynthControlEvent::OscillatorControl(
+                        id,
+                        OscParams::SampleChange(self.available_samples[idx].clone()),
+                    )))
+                    .build(state, options, |b| {
+                        b.set_text(&sample.name)
+                            .set_color(Color::blue()) // TODO: these needs color? or dropdown needs to be a darker color really
+                            .set_height(Pixels(30.0))
+                            .set_width(Units::Pixels(175.))
+                            .set_margin_left(Pixels(5.0))
+                    });
+            });
 
         self.label = Label::new(&self.sample_label).build(state, row1, |builder| {
             builder
@@ -171,7 +174,7 @@ impl Widget for OscillatorControls {
         });
 
         self.gain_knob = ValueKnob::new("Gain", self.gain, 0.0, 1.0)
-            .on_change(move |val| Event::new(OscillatorControlEvent::GainChange(id, val)))
+            .on_change(move |val| Event::new(SynthControlEvent::OscillatorControl(id, Gain(val))))
             .build(state, row2, |builder| {
                 builder.set_width(Units::Pixels(50.0))
             });
@@ -187,17 +190,17 @@ impl Widget for OscillatorControls {
     }
 
     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
-        if let Some(ev) = event.message.downcast::<OscillatorControlEvent>() {
-            match ev {
-                OscillatorControlEvent::OscWavetableChange(idx, sample_idx) => {
+        if let Some(SynthControlEvent::OscillatorControl(idx, param)) = event.message.downcast::<SynthControlEvent>() {
+            match param {
+                OscParams::SampleChange(sample) => {
                     if self.id == *idx {
-                        let label = &self.available_samples[*sample_idx].name;
+                        let label = &sample.name;
 
                         self.sample_label = label.to_string();
                         self.label.set_text(state, label);
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
     }
