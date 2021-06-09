@@ -1,15 +1,13 @@
-use cpal::{
-    traits::{DeviceTrait, StreamTrait},
-};
+use cpal::traits::{DeviceTrait, StreamTrait};
 
-use crate::{synths::Oscillator, Message};
 use crate::mixer::Mixer;
+use crate::Message;
 
 pub fn run<T>(
     device: &cpal::Device,
     config: &cpal::StreamConfig,
     mut mixer: Mixer,
-    command_receiver: crossbeam_channel::Receiver<Message>
+    command_receiver: crossbeam_channel::Receiver<Message>,
 ) -> Result<(), anyhow::Error>
 where
     T: cpal::Sample,
@@ -58,7 +56,6 @@ fn write_data<T>(
 ) where
     T: cpal::Sample,
 {
-
     for frame in output.chunks_mut(output_channels) {
         match input_channels {
             1 => {
@@ -70,7 +67,7 @@ fn write_data<T>(
             2 => {
                 for sample in frame.iter_mut() {
                     *sample = cpal::Sample::from::<f32>(&next_sample());
-	                //println!("Sample is {}", sample.);
+                    //println!("Sample is {}", sample.);
                 }
             }
             _ => panic!("Unsupported channels found in input audio"),

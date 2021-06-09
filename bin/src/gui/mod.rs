@@ -5,23 +5,17 @@ mod filter;
 mod oscillator;
 
 use log::info;
-use tuix::Application;
 use tuix::*;
 
-use crate::gui::events::{OscillatorControlEvent, EnvelopeControlEvent, SynthControlEvent};
+use crate::gui::events::SynthControlEvent;
 use crate::synths::Sample;
 use crate::{
-    gui::adsr::ADSRControls,
     gui::oscillator::Oscillator,
-    keyboard::{keyboard_to_midi, MidiNote},
+    keyboard::keyboard_to_midi,
     mixer::MixerStatePacket,
-    state::get_sample_clock,
     state::{get_midi_keyboard, set_midi_keyboard},
     Message,
 };
-use crossbeam_channel::SendError;
-
-static THEME: &'static str = include_str!("../bbytheme.css");
 
 pub enum AudioWidget {
     Adsr,
@@ -37,7 +31,6 @@ pub struct Controller {
 
     oscillators: Vec<Entity>,
     currently_pressed_keys: Vec<Code>,
-    time_since_last_octave_change: u64,
 
     available_samples: Vec<Sample>,
 }
@@ -55,7 +48,6 @@ impl Controller {
             mixer_state_packet,
             oscillators: vec![],
             currently_pressed_keys: vec![],
-            time_since_last_octave_change: 0,
             available_samples,
         }
     }
@@ -85,7 +77,7 @@ impl Widget for Controller {
         entity
     }
 
-    fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
+    fn on_event(&mut self, _state: &mut State, _entity: Entity, event: &mut Event) {
         if let Some(window_event) = event.message.downcast::<WindowEvent>() {
             match window_event {
                 WindowEvent::KeyDown(code, _) => {
@@ -102,11 +94,9 @@ impl Widget for Controller {
                 }
                 WindowEvent::KeyUp(code, _) => {
                     if *code == Code::KeyZ {
-                        println!("Z up");
                         let new_midi_keyboard = get_midi_keyboard().decrease_octave();
                         set_midi_keyboard(new_midi_keyboard);
                     } else if *code == Code::KeyX {
-                        println!("X up");
                         let new_midi_keyboard = get_midi_keyboard().increase_octave();
                         set_midi_keyboard(new_midi_keyboard);
                     } else if self.currently_pressed_keys.contains(code) {
@@ -121,8 +111,13 @@ impl Widget for Controller {
                             // If that keyup was the last key pressed, send a message for release
                             if self.currently_pressed_keys.len() == 0 {
                                 match self.command_sender.send(Message::Note(0.0)) {
-	                                Ok(_) => {}
-	                                Err(e) => { info!("Something terrible happend in gui keyup: {}", e.to_string())}
+                                    Ok(_) => {}
+                                    Err(e) => {
+                                        info!(
+                                            "Something terrible happend in gui keyup: {}",
+                                            e.to_string()
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -137,12 +132,15 @@ impl Widget for Controller {
         if let Some(ev) = event.message.downcast::<SynthControlEvent>() {
             match ev {
                 SynthControlEvent::OscillatorControl(id, val) => {
-                    self.command_sender.send(Message::OscChange(*id, val.clone())).unwrap();
-                },
+                    self.command_sender
+                        .send(Message::OscChange(*id, val.clone()))
+                        .unwrap();
+                }
                 SynthControlEvent::Envelope(id, val) => {
-                    self.command_sender.send(Message::EnvelopeChange(*id, val.clone())).unwrap();
-                },
-                _ => {}
+                    self.command_sender
+                        .send(Message::EnvelopeChange(*id, val.clone()))
+                        .unwrap();
+                }
             }
         }
     }

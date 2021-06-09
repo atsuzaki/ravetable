@@ -1,7 +1,7 @@
 use tuix::*;
 
 pub struct HDivider {
-    height: Units
+    height: Units,
 }
 
 impl HDivider {
@@ -21,10 +21,7 @@ impl Widget for HDivider {
     type Ret = Entity;
 
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
-        Element::new().build(state, entity, |builder| {
-            builder
-                .set_height(self.height)
-        });
+        Element::new().build(state, entity, |builder| builder.set_height(self.height));
 
         entity
     }

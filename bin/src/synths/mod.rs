@@ -1,12 +1,13 @@
+#![allow(dead_code)]
+
 use hound::WavSpec;
 use itertools::Itertools;
 use samplerate::{ConverterType, Samplerate};
 
-use crate::state::{get_sample_clock, get_sample_rate};
+use crate::state::get_sample_rate;
 use effects::adsr::{ADSREnvelope, ADSR};
 use effects::filters::IIRLowPassFilter;
 use effects::Effect;
-use effects::filters::Filter::StateVariableTPTFilter;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Sample {
@@ -69,8 +70,6 @@ impl Wavetable {
     }
 }
 
-const CLAMP_COEFF: f32 = 3.;
-
 #[derive(Clone)]
 pub enum EffectStatePacket {
     // todo
@@ -127,17 +126,17 @@ impl Oscillator {
         self.upcoming_sample_change = Some(sample);
         self.envelope.reset();
 
-	    let new_wavetable = Wavetable::create_wavetable(
-		    self.upcoming_sample_change
-		        .take()
-		        .expect("Couldn't find wavetable to swap"),
-		    get_sample_rate() as u32,
-	    );
-	    self.table_size_index = &new_wavetable.get_num_samples() - 1;
-	    self.wavetable = new_wavetable;
-	    self.current_index = 0.;
-	    self.update_table_delta();
-	    self.update_low_pass_filter();
+        let new_wavetable = Wavetable::create_wavetable(
+            self.upcoming_sample_change
+                .take()
+                .expect("Couldn't find wavetable to swap"),
+            get_sample_rate() as u32,
+        );
+        self.table_size_index = &new_wavetable.get_num_samples() - 1;
+        self.wavetable = new_wavetable;
+        self.current_index = 0.;
+        self.update_table_delta();
+        self.update_low_pass_filter();
     }
 
     pub fn get_state_packet(&self) -> OscStatePacket {
@@ -169,7 +168,6 @@ impl Oscillator {
 
     #[inline(always)]
     pub fn get_next_sample(&mut self, sample_time: u64) -> f32 {
-
         let index0 = self.current_index as usize;
         let index1 = if index0 == self.table_size_index {
             0
@@ -227,7 +225,7 @@ impl Oscillator {
             .downcast_mut::<IIRLowPassFilter>()
             .unwrap()
             .set_frequency(get_sample_rate(), 15_000.);
-            // .set_frequency(get_sample_rate(), self.frequency * CLAMP_COEFF);
+        // .set_frequency(get_sample_rate(), self.frequency * CLAMP_COEFF);
     }
 
     pub fn set_gain(&mut self, new_gain: f32) {

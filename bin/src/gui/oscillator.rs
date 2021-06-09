@@ -1,11 +1,11 @@
-use crate::gui::adsr::ADSRControls;
-use crate::gui::events::{OscillatorControlEvent, SynthControlEvent};
-use crate::gui::AudioWidget;
-use crate::synths::{OscStatePacket, Sample};
-use crate::OscParams;
-use crate::OscParams::Gain;
-use effects::adsr::ADSR;
-use itertools::Itertools;
+use crate::{
+    gui::adsr::ADSRControls,
+    gui::events::SynthControlEvent,
+    gui::AudioWidget,
+    synths::{OscStatePacket, Sample},
+    OscParams,
+    OscParams::Gain,
+};
 use tuix::*;
 
 const DUMMY_WIDGETS_LIST: [AudioWidget; 1] = [
@@ -189,8 +189,10 @@ impl Widget for OscillatorControls {
         entity
     }
 
-    fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
-        if let Some(SynthControlEvent::OscillatorControl(idx, param)) = event.message.downcast::<SynthControlEvent>() {
+    fn on_event(&mut self, state: &mut State, _entity: Entity, event: &mut Event) {
+        if let Some(SynthControlEvent::OscillatorControl(idx, param)) =
+            event.message.downcast::<SynthControlEvent>()
+        {
             match param {
                 OscParams::SampleChange(sample) => {
                     if self.id == *idx {

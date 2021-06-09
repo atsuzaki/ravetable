@@ -1,8 +1,8 @@
-use cpal::SampleRate;
 use crate::keyboard::MidiKeyboard;
-use std::sync::Mutex;
-use once_cell::sync::Lazy;
+use cpal::SampleRate;
 use effects::set_effects_sample_rate;
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
 
 // TODO: refactor this gnarly thing, perhaps into an Context instance that
 //       gets passed around?
@@ -10,7 +10,7 @@ use effects::set_effects_sample_rate;
 pub struct State {
     pub sample_rate: SampleRate,
     pub sample_clock: u64,
-    pub midi_keyboard: MidiKeyboard
+    pub midi_keyboard: MidiKeyboard,
 }
 
 impl State {

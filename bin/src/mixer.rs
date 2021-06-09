@@ -1,9 +1,7 @@
 use crate::{synths::Oscillator, EnvelopeParams, Message, OscParams};
-use effects::filters::IIRLowPassFilter;
 use itertools::Itertools;
-use log::{error, warn};
 
-use crate::state::{advance_sample_clock, get_sample_clock, get_sample_rate};
+use crate::state::{advance_sample_clock, get_sample_clock};
 use crate::synths::OscStatePacket;
 
 #[derive(Clone)]
@@ -47,10 +45,10 @@ impl Mixer {
                 Ok(val) => match val {
                     Message::Note(note) => {
                         let clock = get_sample_clock();
-                        match note {
-                            1.0 => self.oscillators.iter_mut().for_each(|o| o.trigger(clock)),
-                            0.0 => self.oscillators.iter_mut().for_each(|o| o.release(clock)),
-                            _ => panic!("Invalid note"),
+                        if note >= 1.0 {
+                            self.oscillators.iter_mut().for_each(|o| o.trigger(clock));
+                        } else if note == 0.0 {
+                            self.oscillators.iter_mut().for_each(|o| o.release(clock));
                         }
                     }
                     Message::Frequency(frq) => {
@@ -69,31 +67,28 @@ impl Mixer {
                         }
                     }
                     Message::OscChange(id, param) => {
-                        let mut osc = &mut self.oscillators[id];
+                        let osc = &mut self.oscillators[id];
                         match param {
                             OscParams::Gain(gain) => osc.set_gain(gain),
                             OscParams::SampleChange(sample) => {
                                 osc.queue_change_wavetable(sample);
                             }
                         }
-                    }
-
-                    // Message::EffectsEvent(idx, event) => {
-                    //     match event {
-                    //         // EffectsEvent::IIRFreqChange(f) => {
-                    //         //     // effects[idx[ is a trait object, need to cast it back to what it was or have a generic thing to call to handle events
-                    //         //     let fx = &mut self.oscillators[0].effects[idx];
-                    //         //     let fx = fx
-                    //         //         .as_any_mut()
-                    //         //         .downcast_mut::<IIRLowPassFilter>()
-                    //         //         .expect("Downcast failed");
-                    //         //     fx.set_frequency(get_sample_rate(), f);
-                    //         //
-                    //         // }
-                    //         EffectsEvent::Enabled(_) => {}
-                    //     }
-                    // }
-                    _ => {}
+                    } // Message::EffectsEvent(idx, event) => {
+                      //     match event {
+                      //         // EffectsEvent::IIRFreqChange(f) => {
+                      //         //     // effects[idx[ is a trait object, need to cast it back to what it was or have a generic thing to call to handle events
+                      //         //     let fx = &mut self.oscillators[0].effects[idx];
+                      //         //     let fx = fx
+                      //         //         .as_any_mut()
+                      //         //         .downcast_mut::<IIRLowPassFilter>()
+                      //         //         .expect("Downcast failed");
+                      //         //     fx.set_frequency(get_sample_rate(), f);
+                      //         //
+                      //         // }
+                      //         EffectsEvent::Enabled(_) => {}
+                      //     }
+                      // }
                 },
                 Err(_) => {} // This happens constantly and only means there was nothing to receive
             }
@@ -102,7 +97,6 @@ impl Mixer {
 
     fn get_next_chunk(&mut self) {
         // Add up all the get_next_sample()s from the oscillators, divide by # of osc
-        let output_channels = self.channels;
         let chunk_size = self.chunk_size;
 
         let sample_count = chunk_size;
@@ -131,7 +125,6 @@ impl Mixer {
         }
 
         advance_sample_clock(chunk_size as u64);
-        let frame_sample_clock = get_sample_clock();
 
         self.chunk_buffer = chunk_summed;
     }

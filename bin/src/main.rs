@@ -6,27 +6,19 @@
 //!
 //! Katherine Philip (For CS 410P/510 Computers, Sound and Music (Spring 2021))
 
-//#![feature(format_args_capture)]
-
 use cpal::traits::{DeviceTrait, HostTrait};
 
 use crate::gui::Controller;
 use crate::mixer::{Mixer, MixerStatePacket};
 use crate::playback::run;
-use crate::synths::{OscStatePacket, Oscillator, Sample, Wavetable};
+use crate::synths::{Oscillator, Sample, Wavetable};
 use std::thread;
-use tuix::state::themes::DEFAULT_THEME;
 use tuix::*;
 
 use crate::state::{get_sample_rate, set_sample_rate};
-use effects::filters::{
-    Filter, FilterType, IIRLowPassFilter, ModulatedFilter, StateVariableTPTFilter,
-};
+use effects::filters::{Filter, FilterType, ModulatedFilter, StateVariableTPTFilter};
 use effects::lfo::{Lfo, LfoType};
-use effects::{set_effects_sample_rate, Effect};
-use log::info;
 use std::path::Path;
-use tuix::Property::FlexGrow;
 
 mod gui;
 mod keyboard;
@@ -39,8 +31,8 @@ mod utils;
 #[derive(Debug)]
 struct Opt {
     #[cfg(all(
-    any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd"),
-    feature = "jack"
+        any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd"),
+        feature = "jack"
     ))]
     jack: bool,
 
@@ -60,7 +52,7 @@ pub enum EnvelopeParams {
     Attack(f32),
     Decay(f32),
     Sustain(f32),
-    Release(f32)
+    Release(f32),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -166,11 +158,13 @@ fn start_gui(
             .set_background_color(state, Color::rgb(17, 21, 22))
             .set_align_items(state, AlignItems::FlexStart);
 
-        Controller::new(tx.clone(), rx.clone(), mixer_state_packet, available_samples).build(
-            state,
-            window.entity(),
-            |builder| builder,
-        );
+        Controller::new(
+            tx.clone(),
+            rx.clone(),
+            mixer_state_packet,
+            available_samples,
+        )
+        .build(state, window.entity(), |builder| builder);
     });
 
     app.run();

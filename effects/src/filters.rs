@@ -102,7 +102,7 @@ impl StateVariableTPTFilter {
 }
 
 impl Effect for StateVariableTPTFilter {
-    fn process_samples(&mut self, samples_clock: u64, samples: &mut [f32]) {
+    fn process_samples(&mut self, _samples_clock: u64, samples: &mut [f32]) {
         for i in 0..samples.len() {
             let Self {
                 g, r2, channels, h, ..
@@ -209,7 +209,7 @@ impl IIRLowPassFilter {
 }
 
 impl Effect for IIRLowPassFilter {
-    fn process_samples(&mut self, samples_clock: u64, samples: &mut [f32]) {
+    fn process_samples(&mut self, _samples_clock: u64, samples: &mut [f32]) {
         let IIRLowPassFilter {
             v1,
             v2,

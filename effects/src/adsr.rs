@@ -66,7 +66,6 @@ pub struct ADSREnvelope {
 
     start_time: u64,
     end_time: u64,
-    last_update: u64,
 
     increment: f32,
     last_value: f32,
@@ -79,9 +78,8 @@ impl ADSREnvelope {
             state: ADSREnvelopeState::Idle,
             start_time: 0,
             end_time: 0,
-            last_update: 0,
             increment: 0.0,
-            last_value: 0.0
+            last_value: 0.0,
         }
     }
 
@@ -102,7 +100,6 @@ impl ADSREnvelope {
             ADSREnvelopeState::Attack
         };
 
-
         self.change_state(state, sample_time);
     }
 
@@ -122,7 +119,7 @@ impl ADSREnvelope {
                 if sample_time >= self.end_time {
                     self.change_state(ADSREnvelopeState::Attack, sample_time);
                 }
-            },
+            }
             ADSREnvelopeState::Attack => {
                 self.last_value += self.increment;
                 if sample_time >= self.end_time {
@@ -147,7 +144,6 @@ impl ADSREnvelope {
         };
 
         self.last_value = self.last_value.clamp(0., 1.);
-        self.last_update = sample_time;
         self.last_value
     }
 
@@ -158,7 +154,7 @@ impl ADSREnvelope {
             ADSREnvelopeState::Delay => {
                 self.last_value = 0.;
                 self.end_time = sample_time + self.adsr_values.delay as u64;
-            },
+            }
             ADSREnvelopeState::Attack => {
                 self.set_increment(0., 1., self.adsr_values.attack);
 

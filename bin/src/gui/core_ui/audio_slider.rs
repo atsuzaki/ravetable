@@ -28,8 +28,8 @@ impl AudioSlider {
     }
 
     pub fn on_change<F>(mut self, message: F) -> Self
-        where
-            F: 'static + Fn(f32) -> Event,
+    where
+        F: 'static + Fn(f32) -> Event,
     {
         self.on_change = Some(Box::new(message));
         self
@@ -44,9 +44,7 @@ impl Widget for AudioSlider {
         //       audio_slider will cause the label and textbox to disappear.
         //       Suspecting that's bc element height was not explicitly specified?
         //       Find out what the heck happened there and report to geom
-        let container = HBox::new().build(state, entity, |builder| {
-            builder.class("audio_slider")
-        });
+        let container = HBox::new().build(state, entity, |builder| builder.class("audio_slider"));
 
         Label::new(&self.label).build(state, container, |builder| {
             builder
@@ -67,12 +65,13 @@ impl Widget for AudioSlider {
         //       disable it since it interferes with the slider for some reason.
         //       Trying to handle the events for textbox runs into fun weird mess,
         //       I think it's being worked on, might be working in experiment branch?
-        self.textbox = Textbox::new(&format!("{:.1}", &self.value)).build(state, container, |builder| {
-            builder
-                .set_width(Units::Pixels(50.0))
-                .set_margin_left(Units::Pixels(8.))
-                .set_margin_right(Units::Pixels(2.5))
-        });
+        self.textbox =
+            Textbox::new(&format!("{:.1}", &self.value)).build(state, container, |builder| {
+                builder
+                    .set_width(Units::Pixels(50.0))
+                    .set_margin_left(Units::Pixels(8.))
+                    .set_margin_right(Units::Pixels(2.5))
+            });
 
         entity
     }
@@ -101,8 +100,8 @@ impl Widget for AudioSlider {
                                 .propagate(Propagation::Direct),
                         );
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
     }
