@@ -82,6 +82,7 @@ pub struct OscillatorControls {
     gain: f32,
 
     // components
+    pub dropdown: Entity,
     pub label: Entity,
     pub gain_knob: Entity,
     pub frequency_knob: Entity,
@@ -101,6 +102,7 @@ impl OscillatorControls {
             available_samples,
             gain,
             label: Entity::null(),
+            dropdown: Entity::null(),
             gain_knob: Entity::null(),
             frequency_knob: Entity::null(),
             active_toggle: Entity::null(),
@@ -142,7 +144,6 @@ impl Widget for OscillatorControls {
                 .set_border_color(Color::black())
         });
 
-        // TODO: need a component or whatever
         let (_, _, dropdown) = Dropdown::new(&self.sample_label).build(state, row, |b| {
             b.set_height(Units::Pixels(30.0))
                 .set_width(Units::Pixels(175.))
@@ -166,6 +167,8 @@ impl Widget for OscillatorControls {
                             .set_margin_left(Pixels(5.0))
                     });
             });
+
+        self.dropdown = dropdown;
 
         self.label = Label::new(&self.sample_label).build(state, row1, |builder| {
             builder
@@ -193,16 +196,21 @@ impl Widget for OscillatorControls {
         if let Some(SynthControlEvent::OscillatorControl(idx, param)) =
             event.message.downcast::<SynthControlEvent>()
         {
-            match param {
-                OscParams::SampleChange(sample) => {
-                    if self.id == *idx {
+            if self.id == *idx {
+                match param {
+                    OscParams::SampleChange(sample) => {
                         let label = &sample.name;
 
                         self.sample_label = label.to_string();
                         self.label.set_text(state, label);
+                        state.insert_event(
+                            Event::new(DropdownEvent::SetText(label.clone()))
+                                .target(self.dropdown)
+                                .propagate(Propagation::Up),
+                        );
                     }
+                    _ => {}
                 }
-                _ => {}
             }
         }
     }
