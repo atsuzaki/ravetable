@@ -124,21 +124,19 @@ impl Oscillator {
 
     pub fn queue_change_wavetable(&mut self, sample: Sample) {
         self.upcoming_sample_change = Some(sample);
-        self.envelope.release(get_sample_clock());
-    }
+        self.envelope.trigger(get_sample_clock());
 
-    fn change_wavetable(&mut self) {
-        let new_wavetable = Wavetable::create_wavetable(
-            self.upcoming_sample_change
-                .take()
-                .expect("Couldn't find wavetable to swap"),
-            get_sample_rate() as u32,
-        );
-        self.table_size_index = &new_wavetable.get_num_samples() - 1;
-        self.wavetable = new_wavetable;
-        self.current_index = 0.;
-        self.update_table_delta();
-        self.update_low_pass_filter();
+	    let new_wavetable = Wavetable::create_wavetable(
+		    self.upcoming_sample_change
+		        .take()
+		        .expect("Couldn't find wavetable to swap"),
+		    get_sample_rate() as u32,
+	    );
+	    self.table_size_index = &new_wavetable.get_num_samples() - 1;
+	    self.wavetable = new_wavetable;
+	    self.current_index = 0.;
+	    self.update_table_delta();
+	    self.update_low_pass_filter();
     }
 
     pub fn get_state_packet(&self) -> OscStatePacket {
@@ -170,10 +168,6 @@ impl Oscillator {
 
     #[inline(always)]
     pub fn get_next_sample(&mut self, sample_time: u64) -> f32 {
-        //swap wavetable if we have one queued and adsr has ended
-        if self.upcoming_sample_change.is_some() && !self.envelope.is_active() {
-            self.change_wavetable();
-        }
 
         let index0 = self.current_index as usize;
         let index1 = if index0 == self.table_size_index {

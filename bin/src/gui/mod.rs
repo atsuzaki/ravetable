@@ -21,6 +21,7 @@ use crate::{
     Message,
     Message::EffectsEvent,
 };
+use crossbeam_channel::SendError;
 
 static THEME: &'static str = include_str!("../bbytheme.css");
 
@@ -121,7 +122,10 @@ impl Widget for Controller {
 
                             // If that keyup was the last key pressed, send a message for release
                             if self.currently_pressed_keys.len() == 0 {
-                                self.command_sender.send(Message::Note(0.0)).unwrap();
+                                match self.command_sender.send(Message::Note(0.0)) {
+	                                Ok(_) => {}
+	                                Err(e) => { info!("Something terrible happend in gui keyup: {}", e.to_string())}
+                                }
                             }
                         }
                     }
