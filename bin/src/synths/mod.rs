@@ -6,6 +6,7 @@ use crate::state::{get_sample_clock, get_sample_rate};
 use effects::adsr::{ADSREnvelope, ADSR};
 use effects::filters::IIRLowPassFilter;
 use effects::Effect;
+use effects::filters::Filter::StateVariableTPTFilter;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Sample {
@@ -115,7 +116,7 @@ impl Oscillator {
 
         osc.add_effect(Box::new(IIRLowPassFilter::new_low_pass(
             get_sample_rate(),
-            (frequency * CLAMP_COEFF).max(5000f32),
+            15000.,
             1.,
         )));
         osc.update_table_delta();
@@ -124,7 +125,7 @@ impl Oscillator {
 
     pub fn queue_change_wavetable(&mut self, sample: Sample) {
         self.upcoming_sample_change = Some(sample);
-        self.envelope.trigger(get_sample_clock());
+        self.envelope.reset();
 
 	    let new_wavetable = Wavetable::create_wavetable(
 		    self.upcoming_sample_change
@@ -225,7 +226,8 @@ impl Oscillator {
             .as_any_mut()
             .downcast_mut::<IIRLowPassFilter>()
             .unwrap()
-            .set_frequency(get_sample_rate(), self.frequency * CLAMP_COEFF);
+            .set_frequency(get_sample_rate(), 15_000.);
+            // .set_frequency(get_sample_rate(), self.frequency * CLAMP_COEFF);
     }
 
     pub fn set_gain(&mut self, new_gain: f32) {
@@ -234,7 +236,7 @@ impl Oscillator {
 
     pub fn set_frequency(&mut self, new_frequency: f32) {
         self.frequency = new_frequency;
-        self.update_low_pass_filter();
+        // self.update_low_pass_filter();
         self.update_table_delta();
     }
 }

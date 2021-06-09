@@ -86,7 +86,7 @@ impl ADSREnvelope {
 
     pub fn reset(&mut self) {
         self.end_time = 0;
-        self.state = ADSREnvelopeState::Idle;
+        // self.state = ADSREnvelopeState::Idle;
     }
 
     pub fn trigger(&mut self, sample_clock: u64) {

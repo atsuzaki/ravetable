@@ -125,9 +125,15 @@ impl Widget for OscillatorControls {
         let row = HBox::new().build(state, container, |builder| {
             builder
                 .set_justify_content(JustifyContent::SpaceEvenly)
-                .set_height(Units::Pixels(150.))
+                .set_height(Units::Pixels(50.))
                 .set_width(Units::Pixels(200.))
                 .set_margin_bottom(Units::Pixels(5.0))
+        });
+        let row1 = HBox::new().build(state, container, |builder| {
+            builder
+                .set_justify_content(JustifyContent::SpaceEvenly)
+                .set_height(Units::Pixels(100.))
+                .set_width(Units::Pixels(200.))
         });
         let row2 = HBox::new().build(state, container, |builder| {
             builder
@@ -158,7 +164,7 @@ impl Widget for OscillatorControls {
                 });
         });
 
-        self.label = Label::new(&self.sample_label).build(state, row, |builder| {
+        self.label = Label::new(&self.sample_label).build(state, row1, |builder| {
             builder
                 .set_text_justify(Justify::Center)
                 .set_width(Units::Pixels(50.0))

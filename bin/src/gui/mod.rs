@@ -72,7 +72,7 @@ impl Widget for Controller {
         let root = HBox::new().build(state, entity, |builder| {
             builder
                 .set_margin(Units::Pixels(4.))
-                .set_flex_direction(FlexDirection::Row)
+                .set_flex_direction(FlexDirection::Column)
         });
 
         for (i, oscillator) in self.mixer_state_packet.oscillators.iter().enumerate() {

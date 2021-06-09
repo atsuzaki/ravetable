@@ -26,6 +26,7 @@ use effects::lfo::{Lfo, LfoType};
 use effects::{set_effects_sample_rate, Effect};
 use log::info;
 use std::path::Path;
+use tuix::Property::FlexGrow;
 
 mod gui;
 mod keyboard;
@@ -34,6 +35,17 @@ mod playback;
 mod state;
 mod synths;
 mod utils;
+
+#[derive(Debug)]
+struct Opt {
+    #[cfg(all(
+    any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd"),
+    feature = "jack"
+    ))]
+    jack: bool,
+
+    device: String,
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Message {
@@ -153,17 +165,6 @@ fn start_gui(
     });
 
     app.run();
-}
-
-#[derive(Debug)]
-struct Opt {
-    #[cfg(all(
-        any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd"),
-        feature = "jack"
-    ))]
-    jack: bool,
-
-    device: String,
 }
 
 fn init_logger() {
