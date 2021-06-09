@@ -1,4 +1,5 @@
 use crate::synths::Sample;
+use crate::{OscParams, EnvelopeParams};
 
 // id, value
 #[derive(PartialEq, Clone, Debug)]
@@ -17,3 +18,8 @@ pub enum EnvelopeControlEvent {
     ReleaseChange(usize, f32)
 }
 
+#[derive(PartialEq, Clone, Debug)]
+pub enum SynthControlEvent {
+    OscillatorControl(usize, OscParams),
+    Envelope(usize, EnvelopeParams),
+}

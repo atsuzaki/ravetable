@@ -1,4 +1,4 @@
-use crate::{synths::Oscillator, Message, EffectsEvent};
+use crate::{synths::Oscillator, Message, EnvelopeParams};
 use log::{error, warn};
 use itertools::Itertools;
 use effects::filters::IIRLowPassFilter;
@@ -46,8 +46,17 @@ impl Mixer {
             self.samples_since_last_gui_poll = 0;
 
             match command_receiver.try_recv() {
-                // TODO
                 Ok(val) => match val {
+                    Message::EnvelopeChange(id, param) => {
+                        let mut osc = &mut self.oscillators[id];
+                        match param {
+                            EnvelopeParams::Delay(val) => osc.envelope.adsr_values.delay = val,
+                            EnvelopeParams::Attack(val) => osc.envelope.adsr_values.attack = val,
+                            EnvelopeParams::Decay(val) => osc.envelope.adsr_values.decay = val,
+                            EnvelopeParams::Sustain(val) => osc.envelope.adsr_values.sustain = val,
+                            EnvelopeParams::Release(val) => osc.envelope.adsr_values.release = val,
+                        }
+                    },
                     Message::Note(note) => {
                         let clock = get_sample_clock();
                         match note {
@@ -59,25 +68,24 @@ impl Mixer {
                     Message::Frequency(frq) => {
                         self.oscillators.iter_mut().for_each(|o| o.set_frequency(frq));
                     }
-                    Message::Gain(id, gain) => {
+                    Message::OscGain(id, gain) => {
                         self.oscillators[id].set_gain(gain);
                     }
-                    Message::EffectsEvent(idx, event) => {
-                        match event {
-                            // TODO: this is still hardcoded
-                            EffectsEvent::IIRFreqChange(f) => {
-                                // effects[idx[ is a trait object, need to cast it back to what it was or have a generic thing to call to handle events
-                                let fx = &mut self.oscillators[0].effects[idx];
-                                let fx = fx
-	                                .as_any_mut()
-	                                .downcast_mut::<IIRLowPassFilter>()
-	                                .expect("Downcast failed");
-	                            fx.set_frequency(get_sample_rate(), f);
-
-                            }
-                            EffectsEvent::Enabled(_) => {}
-                        }
-                    }
+                    // Message::EffectsEvent(idx, event) => {
+                    //     match event {
+                    //         // EffectsEvent::IIRFreqChange(f) => {
+                    //         //     // effects[idx[ is a trait object, need to cast it back to what it was or have a generic thing to call to handle events
+                    //         //     let fx = &mut self.oscillators[0].effects[idx];
+                    //         //     let fx = fx
+	                //         //         .as_any_mut()
+	                //         //         .downcast_mut::<IIRLowPassFilter>()
+	                //         //         .expect("Downcast failed");
+	                //         //     fx.set_frequency(get_sample_rate(), f);
+                    //         //
+                    //         // }
+                    //         EffectsEvent::Enabled(_) => {}
+                    //     }
+                    // }
 	                Message::OscWavetableChange(idx, sample) => {
 		                self.oscillators[idx].queue_change_wavetable(sample);
 	                }

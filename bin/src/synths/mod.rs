@@ -95,7 +95,7 @@ pub struct Oscillator {
 
     pub wavetable: Wavetable,
     pub effects: Vec<Box<dyn Effect + Send>>,
-    envelope: ADSREnvelope,
+    pub envelope: ADSREnvelope,
     upcoming_sample_change: Option<Sample>,
 }
 

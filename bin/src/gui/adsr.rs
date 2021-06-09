@@ -3,14 +3,14 @@ use tuix::*;
 use crate::gui::core_ui::audio_slider::AudioSlider;
 use crate::gui::core_ui::audio_widget::AudioWidgetContainer;
 use crate::gui::core_ui::hdivider::HDivider;
+use crate::gui::events::{EnvelopeControlEvent, SynthControlEvent};
+use crate::EnvelopeParams;
 use effects::adsr::ADSR;
-use crate::gui::events::EnvelopeControlEvent;
 
 pub struct ADSRControls {
     osc_id: usize,
 
     adsr: ADSR,
-
     // components
 }
 
@@ -37,21 +37,50 @@ impl Widget for ADSRControls {
                 .set_flex_direction(FlexDirection::Column)
         });
 
-        let slider_max = 32.;
+        let slider_max = 10.;
         AudioSlider::new("Attack", 0., slider_max, self.adsr.attack)
-            .on_change( (move |val| {
-                Event::new(EnvelopeControlEvent::AttackChange(id, val))
-            }))
+            .on_change(
+                (move |val| {
+                    let val = ADSR::convert_value_from_time(val);
+                    Event::new(SynthControlEvent::Envelope(id, EnvelopeParams::Attack(val)))
+                }),
+            )
             .build(state, row, |builder| builder);
-        AudioSlider::new("Decay", 0., slider_max, self.adsr.decay).build(state, row, |builder| builder);
+        AudioSlider::new("Decay", 0., slider_max, self.adsr.decay)
+            .on_change(
+                (move |val| {
+                    let val = ADSR::convert_value_from_time(val);
+                    Event::new(SynthControlEvent::Envelope(id, EnvelopeParams::Decay(val)))
+                }),
+            )
+            .build(state, row, |builder| builder);
         AudioSlider::new("Sustain", 0., slider_max, self.adsr.sustain)
+            .on_change(
+                (move |val| {
+                    let val = ADSR::convert_value_from_time(val);
+                    Event::new(SynthControlEvent::Envelope(id, EnvelopeParams::Sustain(val)))
+                }),
+            )
             .build(state, row, |builder| builder);
         AudioSlider::new("Release", 0., slider_max, self.adsr.release)
+            .on_change(
+                (move |val| {
+                    let val = ADSR::convert_value_from_time(val);
+                    Event::new(SynthControlEvent::Envelope(id, EnvelopeParams::Release(val)))
+                }),
+            )
             .build(state, row, |builder| builder);
 
         HDivider::new().build(state, row, |builder| builder);
 
-        AudioSlider::new("Delay", 0., slider_max, self.adsr.delay).build(state, row, |builder| builder);
+        AudioSlider::new("Delay", 0., slider_max, self.adsr.delay)
+            .on_change(
+                (move |val| {
+                    let val = ADSR::convert_value_from_time(val);
+                    Event::new(SynthControlEvent::Envelope(id, EnvelopeParams::Delay(val)))
+                }),
+            )
+            .build(state, row, |builder| builder);
 
         entity
     }

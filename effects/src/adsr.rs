@@ -33,6 +33,11 @@ impl ADSR {
         }
     }
 
+    pub fn convert_value_from_time(value: f32) -> f32 {
+        let sample_rate = get_sample_rate();
+        value * sample_rate
+    }
+
     pub fn convert_adsr_from_time(adsr: &ADSR) -> ADSR {
         let sample_rate = get_sample_rate();
         ADSR {

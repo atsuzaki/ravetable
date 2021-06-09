@@ -8,7 +8,7 @@ use log::info;
 use tuix::Application;
 use tuix::*;
 
-use crate::gui::events::{OscillatorControlEvent, EnvelopeControlEvent};
+use crate::gui::events::{OscillatorControlEvent, EnvelopeControlEvent, SynthControlEvent};
 use crate::synths::Sample;
 use crate::{
     gui::adsr::ADSRControls,
@@ -17,9 +17,7 @@ use crate::{
     mixer::MixerStatePacket,
     state::get_sample_clock,
     state::{get_midi_keyboard, set_midi_keyboard},
-    EffectsEvent::IIRFreqChange,
     Message,
-    Message::EffectsEvent,
 };
 use crossbeam_channel::SendError;
 
@@ -138,7 +136,7 @@ impl Widget for Controller {
         if let Some(ev) = event.message.downcast::<OscillatorControlEvent>() {
             match ev {
                 OscillatorControlEvent::GainChange(id, val) => {
-                    self.command_sender.send(Message::Gain(*id, *val)).unwrap();
+                    self.command_sender.send(Message::OscGain(*id, *val)).unwrap();
                 }
                 OscillatorControlEvent::OscWavetableChange(id, sample_idx) => {
                     self.command_sender
@@ -152,10 +150,14 @@ impl Widget for Controller {
             }
         }
 
-        if let Some(ev) = event.message.downcast::<EnvelopeControlEvent>() {
+        // TODO: this SynthControlEvent -> crossbeam messages conversion could very easily be implemented as From<T>
+        if let Some(ev) = event.message.downcast::<SynthControlEvent>() {
             match ev {
-                EnvelopeControlEvent::AttackChange(id, val) => {
-                    self.command_sender.send(Message::Gain(*id, *val)).unwrap();
+                SynthControlEvent::OscillatorControl(id, val) => {
+                    self.command_sender.send(Message::OscChange(*id, *val)).unwrap();
+                },
+                SynthControlEvent::Envelope(id, val) => {
+                    self.command_sender.send(Message::EnvelopeChange(*id, *val)).unwrap();
                 },
                 _ => {}
             }
