@@ -1,8 +1,13 @@
-use crate::{synths::Oscillator, EnvelopeParams, Message, OscParams};
 use itertools::Itertools;
 
+use crate::messages::{
+    EnvelopeParams, LfoParams, Message, ModulatedFilterParams, OscParams, StateVarTPTFilterParams,
+};
 use crate::state::{advance_sample_clock, get_sample_clock};
 use crate::synths::OscStatePacket;
+use crate::synths::Oscillator;
+use effects::filters::Filter;
+use effects::{get_sample_rate, Effect};
 
 #[derive(Clone)]
 pub struct MixerStatePacket {
@@ -74,21 +79,52 @@ impl Mixer {
                                 osc.queue_change_wavetable(sample);
                             }
                         }
-                    } // Message::EffectsEvent(idx, event) => {
-                      //     match event {
-                      //         // EffectsEvent::IIRFreqChange(f) => {
-                      //         //     // effects[idx[ is a trait object, need to cast it back to what it was or have a generic thing to call to handle events
-                      //         //     let fx = &mut self.oscillators[0].effects[idx];
-                      //         //     let fx = fx
-                      //         //         .as_any_mut()
-                      //         //         .downcast_mut::<IIRLowPassFilter>()
-                      //         //         .expect("Downcast failed");
-                      //         //     fx.set_frequency(get_sample_rate(), f);
-                      //         //
-                      //         // }
-                      //         EffectsEvent::Enabled(_) => {}
-                      //     }
-                      // }
+                    }
+                    Message::ModulatedFilterParams(id, effect_id, param) => {
+                        println!("modulated filter event in mixer");
+
+                        // TODO: fix this gnarly match
+                        if let Effect::ModulatedFilter(e) =
+                            &mut self.oscillators[id].effects[effect_id]
+                        {
+                            println!("effect index: {}", effect_id);
+                            match &param {
+                                ModulatedFilterParams::Filter(f) => {
+                                    if let Filter::StateVariableTPTFilter(filter) = &mut e.filter {
+                                        match f {
+                                            StateVarTPTFilterParams::FilterType(v) => {
+                                                filter.set_filter_type(*v);
+                                            }
+                                            StateVarTPTFilterParams::Frequency(v) => {
+                                                filter.set_frequency(get_sample_rate(), *v);
+                                            }
+                                            StateVarTPTFilterParams::Resonance(v) => {
+                                                filter.set_resonance(get_sample_rate(), *v);
+                                            }
+                                        };
+                                    };
+                                }
+                                ModulatedFilterParams::Lfo(f) => {
+                                    let lfo = &mut e.lfo;
+                                    // TODO
+                                    match f {
+                                        LfoParams::LfoType(v) => {
+                                            lfo.set_waveform(*v);
+                                        }
+                                        LfoParams::Frequency(v) => {
+                                            lfo.set_frequency(*v);
+                                        }
+                                        LfoParams::Phase(v) => {
+                                            lfo.set_phase(*v);
+                                        }
+                                    }
+                                }
+                                ModulatedFilterParams::BaseFrequency(frq) => e.set_frequency(*frq),
+                                _ => {}
+                            }
+                        }
+                    }
+                    _ => {}
                 },
                 Err(_) => {} // This happens constantly and only means there was nothing to receive
             }
@@ -111,7 +147,15 @@ impl Mixer {
                 let mut chunks = o.get_next_chunk(sample_count, frame_sample_clock);
 
                 for e in &mut o.effects {
-                    e.process_samples(frame_sample_clock, &mut chunks);
+                    match e {
+                        Effect::ModulatedFilter(e) => {
+                            e.process_samples(frame_sample_clock, &mut chunks)
+                        }
+                        Effect::IIRFilter(e) => e.process_samples(frame_sample_clock, &mut chunks),
+                        Effect::StateVariablePTPFilter(e) => {
+                            e.process_samples(frame_sample_clock, &mut chunks)
+                        }
+                    }
                 }
 
                 chunks

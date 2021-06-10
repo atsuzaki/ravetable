@@ -1,7 +1,7 @@
 use cpal::traits::{DeviceTrait, StreamTrait};
 
+use crate::messages::Message;
 use crate::mixer::Mixer;
-use crate::Message;
 
 pub fn run<T>(
     device: &cpal::Device,

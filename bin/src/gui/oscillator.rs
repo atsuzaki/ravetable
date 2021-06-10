@@ -1,17 +1,14 @@
+use tuix::*;
+
+use crate::gui::filter::ModulatedFilterControls;
+use crate::messages::OscParams;
+use crate::messages::OscParams::Gain;
 use crate::{
     gui::adsr::ADSRControls,
     gui::events::SynthControlEvent,
-    gui::AudioWidget,
     synths::{OscStatePacket, Sample},
-    OscParams,
-    OscParams::Gain,
 };
-use tuix::*;
-
-const DUMMY_WIDGETS_LIST: [AudioWidget; 1] = [
-    AudioWidget::Adsr,
-    // AudioWidget::Lfo,
-];
+use effects::EffectStatePacket;
 
 pub struct Oscillator {
     id: usize,
@@ -51,21 +48,25 @@ impl Widget for Oscillator {
         .build(state, container, |builder| builder);
 
         let widget_rack = HBox::new().build(state, container, |builder| {
-            builder.set_flex_direction(FlexDirection::Column)
+            builder.set_flex_direction(FlexDirection::Row)
             // .class("oscillator")
         });
 
-        for widget in std::array::IntoIter::new(DUMMY_WIDGETS_LIST) {
-            match widget {
-                AudioWidget::Adsr => {
-                    ADSRControls::new(id, self.osc_state.adsr).build(
+        ADSRControls::new(id, self.osc_state.adsr).build(state, widget_rack, |builder| builder);
+
+        // Skip 1 bc we're not showing the internal low pass filter (yet. TODO)
+        for (effect_id, effect) in self.osc_state.effects.iter().skip(1).enumerate() {
+            match effect {
+                EffectStatePacket::ModulatedFilter(e) => {
+                    let effect_id = effect_id + 1; // Plus one since we skipped the first el
+                    ModulatedFilterControls::new(id, effect_id, e.clone()).build(
                         state,
                         widget_rack,
                         |builder| builder,
                     );
                 }
-                AudioWidget::Lfo => {}
-                AudioWidget::IIRFilter => {}
+                EffectStatePacket::IIRFilter(_) => {}
+                EffectStatePacket::StateVariablePTPFilter(_) => {}
             }
         }
 

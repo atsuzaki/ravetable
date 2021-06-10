@@ -1,10 +1,12 @@
 use tuix::*;
 
+use effects::adsr::ADSR;
+
+use crate::messages::EnvelopeParams;
 use crate::{
     gui::core_ui::audio_slider::AudioSlider, gui::core_ui::audio_widget::AudioWidgetContainer,
-    gui::core_ui::hdivider::HDivider, gui::events::SynthControlEvent, EnvelopeParams,
+    gui::core_ui::hdivider::HDivider, gui::events::SynthControlEvent,
 };
-use effects::adsr::ADSR;
 
 pub struct ADSRControls {
     osc_id: usize,

@@ -7,7 +7,7 @@ use samplerate::{ConverterType, Samplerate};
 use crate::state::get_sample_rate;
 use effects::adsr::{ADSREnvelope, ADSR};
 use effects::filters::IIRLowPassFilter;
-use effects::Effect;
+use effects::{Effect, EffectStatePacket};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Sample {
@@ -72,11 +72,6 @@ impl Wavetable {
 }
 
 #[derive(Clone)]
-pub enum EffectStatePacket {
-    // todo
-}
-
-#[derive(Clone)]
 pub struct OscStatePacket {
     pub name: String,
     pub gain: f32,
@@ -94,7 +89,8 @@ pub struct Oscillator {
     table_size_index: usize,
 
     pub wavetable: Wavetable,
-    pub effects: Vec<Box<dyn Effect + Send>>,
+    pub effects: Vec<Effect>,
+
     pub envelope: ADSREnvelope,
     upcoming_sample_change: Option<Sample>,
 }
@@ -114,7 +110,7 @@ impl Oscillator {
             upcoming_sample_change: None,
         };
 
-        osc.add_effect(Box::new(IIRLowPassFilter::new_low_pass(
+        osc.add_effect(Effect::IIRFilter(IIRLowPassFilter::new_low_pass(
             get_sample_rate(),
             15000.,
             1.,
@@ -137,20 +133,34 @@ impl Oscillator {
         self.wavetable = new_wavetable;
         self.current_index = 0.;
         self.update_table_delta();
-        self.update_low_pass_filter();
+        // self.update_low_pass_filter();
     }
 
     pub fn get_state_packet(&self) -> OscStatePacket {
+        let effect_packets = self
+            .effects
+            .iter()
+            .map(|e| match e {
+                Effect::ModulatedFilter(e) => {
+                    EffectStatePacket::ModulatedFilter(e.get_state_packet())
+                }
+                Effect::IIRFilter(e) => EffectStatePacket::IIRFilter(e.get_state_packet()),
+                Effect::StateVariablePTPFilter(e) => {
+                    EffectStatePacket::StateVariablePTPFilter(e.get_state_packet())
+                }
+            })
+            .collect_vec();
+
         OscStatePacket {
             name: self.wavetable.sample.name.clone(),
             gain: self.gain,
             frequency: self.frequency,
             adsr: self.envelope.adsr_values,
-            effects: Vec::new(), //self.effects.map(|e| e.get_state_packet()) TODO
+            effects: effect_packets,
         }
     }
 
-    pub fn add_effect(&mut self, effect: Box<dyn Effect + Send>) {
+    pub fn add_effect(&mut self, effect: Effect) {
         self.effects.push(effect);
     }
 
@@ -219,15 +229,13 @@ impl Oscillator {
         self.table_delta = frq_fraq;
     }
 
-    fn update_low_pass_filter(&mut self) {
-        // Internal low pass filter we use for clamping is always index 0, since we always add it first
-        // TODO: Rather jank, consider to fix it
-        self.effects[0]
-            .as_any_mut()
-            .downcast_mut::<IIRLowPassFilter>()
-            .unwrap()
-            .set_frequency(get_sample_rate(), 15_000.);
-    }
+    // fn update_low_pass_filter(&mut self) {
+    // Internal low pass filter we use for clamping is always index 0, since we always add it first
+    // TODO: No longer used perhaps since we're no longer dynamically changing its frq based on osc frq?
+    // if let EffectEnum::IIRFilter(e) = &mut self.effects[0] {
+    //     e.set_frequency(get_sample_rate(), 15_000.);
+    // }
+    // }
 
     pub fn set_gain(&mut self, new_gain: f32) {
         self.gain = new_gain;

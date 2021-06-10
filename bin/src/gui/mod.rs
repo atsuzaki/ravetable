@@ -1,27 +1,21 @@
-mod adsr;
-mod core_ui;
-mod events;
-mod filter;
-mod oscillator;
-
 use log::info;
 use tuix::*;
 
 use crate::gui::events::SynthControlEvent;
+use crate::messages::Message;
 use crate::synths::Sample;
 use crate::{
     gui::oscillator::Oscillator,
     keyboard::keyboard_to_midi,
     mixer::MixerStatePacket,
     state::{get_midi_keyboard, set_midi_keyboard},
-    Message,
 };
 
-pub enum AudioWidget {
-    Adsr,
-    Lfo,
-    IIRFilter,
-}
+mod adsr;
+mod core_ui;
+mod events;
+mod filter;
+mod oscillator;
 
 pub struct Controller {
     command_sender: crossbeam_channel::Sender<Message>,
@@ -139,6 +133,12 @@ impl Widget for Controller {
                 SynthControlEvent::Envelope(id, val) => {
                     self.command_sender
                         .send(Message::EnvelopeChange(*id, val.clone()))
+                        .unwrap();
+                }
+                SynthControlEvent::ModulatedFilter(id, effect_id, val) => {
+                    println!("modulated filter event");
+                    self.command_sender
+                        .send(Message::ModulatedFilterParams(*id, *effect_id, val.clone()))
                         .unwrap();
                 }
             }

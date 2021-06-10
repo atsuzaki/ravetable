@@ -9,6 +9,7 @@
 
 .widget_container {
     flex-direction: column;
+    justify-content: flex-start;
     height: 300px;
     min-width: 200px;
 

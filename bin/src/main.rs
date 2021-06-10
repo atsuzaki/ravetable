@@ -1,27 +1,27 @@
 // TODO: write title for this thing
 //! Ravetable
 //!
-//! Playback code largely adapted from cpal examples: https://github.com/RustAudio/cpal/tree/master/examples
-//! Output WAV is saved to "$CARGO_MANIFEST_DIR/recorded.wav".
-//!
 //! Katherine Philip (For CS 410P/510 Computers, Sound and Music (Spring 2021))
 
+use std::path::Path;
+use std::thread;
+
 use cpal::traits::{DeviceTrait, HostTrait};
+use tuix::*;
+
+use effects::filters::{Filter, FilterType, ModulatedFilter, StateVariableTPTFilter};
+use effects::lfo::{Lfo, LfoType};
 
 use crate::gui::Controller;
 use crate::mixer::{Mixer, MixerStatePacket};
 use crate::playback::run;
-use crate::synths::{Oscillator, Sample, Wavetable};
-use std::thread;
-use tuix::*;
-
 use crate::state::{get_sample_rate, set_sample_rate};
-use effects::filters::{Filter, FilterType, ModulatedFilter, StateVariableTPTFilter};
-use effects::lfo::{Lfo, LfoType};
-use std::path::Path;
+use crate::synths::{Oscillator, Sample, Wavetable};
+use effects::Effect;
 
 mod gui;
 mod keyboard;
+mod messages;
 mod mixer;
 mod playback;
 mod state;
@@ -39,33 +39,8 @@ struct Opt {
     device: String,
 }
 
-// Wish I had typescript union/intersections for defining these
-#[derive(Clone, Debug, PartialEq)]
-pub enum OscParams {
-    Gain(f32),
-    SampleChange(Sample),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum EnvelopeParams {
-    Delay(f32),
-    Attack(f32),
-    Decay(f32),
-    Sustain(f32),
-    Release(f32),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum Message {
-    Note(f32),
-    Frequency(f32),
-
-    OscChange(usize, OscParams),
-    EnvelopeChange(usize, EnvelopeParams),
-}
-
-pub type CrossbeamReceiver = crossbeam_channel::Receiver<Message>;
-pub type CrossbeamSender = crossbeam_channel::Sender<Message>;
+pub type CrossbeamReceiver = crossbeam_channel::Receiver<messages::Message>;
+pub type CrossbeamSender = crossbeam_channel::Sender<messages::Message>;
 
 fn query_samples(samples_path: &str) -> Vec<Sample> {
     let base_path = Path::new(".");
@@ -108,21 +83,30 @@ fn main() -> Result<(), anyhow::Error> {
 
     let wavetable = Wavetable::create_wavetable(samples[0].clone(), config.sample_rate().0);
     let mut osc = Oscillator::new(0.5, 1440., wavetable);
-    osc.add_effect(Box::new(ModulatedFilter::new(
+    osc.add_effect(Effect::ModulatedFilter(ModulatedFilter::new(
         // TODO: frequency is all weird now since it gets chunked
         //       it's only calcing the LFO for the _sample time at chunk request_
         //       need to advance it into the future like we did for adsr too
         Lfo::new(LfoType::Sine, 0.5, 1.),
         Filter::StateVariableTPTFilter(StateVariableTPTFilter::new(
             get_sample_rate(),
-            1000.,
+            2000.,
             FilterType::LowPass,
         )),
         2000.,
     )));
 
     let wavetable2 = Wavetable::create_wavetable(samples[0].clone(), config.sample_rate().0);
-    let osc2 = Oscillator::new(0.2, 440., wavetable2);
+    let mut osc2 = Oscillator::new(0.2, 440., wavetable2);
+    osc2.add_effect(Effect::ModulatedFilter(ModulatedFilter::new(
+        Lfo::new(LfoType::Sine, 0., 1.),
+        Filter::StateVariableTPTFilter(StateVariableTPTFilter::new(
+            get_sample_rate(),
+            2000.,
+            FilterType::LowPass,
+        )),
+        2000.,
+    )));
 
     let mixer = Mixer::new(vec![osc, osc2]);
     let mixer_state_packet = mixer.get_state_packet().clone();
@@ -142,8 +126,8 @@ fn main() -> Result<(), anyhow::Error> {
 }
 
 fn start_gui(
-    tx: crossbeam_channel::Sender<Message>,
-    rx: crossbeam_channel::Receiver<Message>,
+    tx: crossbeam_channel::Sender<messages::Message>,
+    rx: crossbeam_channel::Receiver<messages::Message>,
     mixer_state_packet: MixerStatePacket,
     available_samples: Vec<Sample>,
 ) {
@@ -154,8 +138,9 @@ fn start_gui(
         }
 
         window
-            .set_title("basic")
             .set_background_color(state, Color::rgb(17, 21, 22))
+            // .set_height(state, Pixels(648.))
+            // .set_width(state, Pixels(1000.))
             .set_align_items(state, AlignItems::FlexStart);
 
         Controller::new(

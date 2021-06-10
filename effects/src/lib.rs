@@ -1,6 +1,9 @@
+use crate::filters::{
+    IIRFilterStatePacket, IIRLowPassFilter, ModulatedFilter, ModulatedFilterStatePacket,
+    StateVariableTPTFilter, StateVariableTPTFilterStatePacket,
+};
 use cpal::SampleRate;
 use once_cell::sync::OnceCell;
-use std::any::Any;
 
 pub mod adsr;
 pub mod filters;
@@ -18,9 +21,15 @@ pub fn set_effects_sample_rate(sample_rate: SampleRate) {
     SAMPLE_RATE.set(sample_rate).unwrap();
 }
 
-pub trait Effect {
-    /// Applies effect to samples, mutating it in place
-    fn process_samples(&mut self, samples_clock: u64, samples: &mut [f32]);
-    fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) -> &mut dyn Any;
+pub enum Effect {
+    ModulatedFilter(ModulatedFilter),
+    IIRFilter(IIRLowPassFilter), // TODO: IIRFilter should be more than lowpass
+    StateVariablePTPFilter(StateVariableTPTFilter),
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum EffectStatePacket {
+    ModulatedFilter(ModulatedFilterStatePacket),
+    IIRFilter(IIRFilterStatePacket),
+    StateVariablePTPFilter(StateVariableTPTFilterStatePacket),
 }
