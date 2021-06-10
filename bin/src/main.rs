@@ -139,9 +139,8 @@ fn start_gui(
 
         window
             .set_background_color(state, Color::rgb(17, 21, 22))
-            // .set_height(state, Pixels(648.))
-            // .set_width(state, Pixels(1000.))
-            .set_align_items(state, AlignItems::FlexStart);
+            .set_justify_content(state, JustifyContent::Center)
+            .set_align_items(state, AlignItems::Center);
 
         Controller::new(
             tx.clone(),
@@ -149,8 +148,8 @@ fn start_gui(
             mixer_state_packet,
             available_samples,
         )
-        .build(state, window.entity(), |builder| builder);
-    });
+            .build(state, window.entity(), |builder| builder);
+    }, Some(830), Some(680));
 
     app.run();
 }
