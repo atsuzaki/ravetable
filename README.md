@@ -52,6 +52,8 @@ There are several features that are already implemented (or trivially-implementa
 
 The messaging bus and events are quite primitive still. I came across [this neat article by Devin Brite](https://dwbrite.com/blog/post/rust%20enums%20by%20example) about Rust enums which coincidentally talked about audio systems about two days before the project due date, and work on refactoring to enum-based system is still in progress. Originally, Ravetable effects were implemented via dynamic trait objects, which incur a runtime cost due to the dynamic dispatch requirements. The ability to emulate dynamic dispatch via trivial Rust `match` improved the performance, but more importantly made the code flexible in a manner that is easier to work with.
 
+Testing in the project is mainly done by running it and listening to the output, as it has been the most effective way to find out if something's working correctly. I wasn't too sure of how to productively write automated tests for most of this crate.
+
 That said, I am very happy with the result! It is very satisfying to start with writing low-level audio code and building on top of it into a functional synth that is already able to produce really cool sounds.
 
 ## License
