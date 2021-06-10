@@ -80,7 +80,7 @@ impl Widget for ModulatedFilterControls {
                 )))
                 .build(state, options, |b| {
                     b.set_text(&format!("{}", filter_type))
-                        .set_color(Color::blue()) // TODO: these needs color? or dropdown needs to be a darker color really
+                        .set_color(Color::blue())
                         .set_height(Pixels(30.0))
                         .set_width(Units::Pixels(175.))
                         .set_margin_left(Pixels(5.0))

@@ -1,4 +1,3 @@
-// TODO: write title for this thing
 //! Ravetable
 //!
 //! Katherine Philip (For CS 410P/510 Computers, Sound and Music (Spring 2021))

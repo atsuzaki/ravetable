@@ -14,7 +14,6 @@ where
 {
     let output_channels = config.channels as usize;
     let input_channels = mixer.channels;
-    // let mut samples = input_wav.samples.take().unwrap().into_iter(); //input_wav's job is basically done now
 
     /////// INPUT WAV VERSION
     // let mut next_value = move || {

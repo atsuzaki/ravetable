@@ -160,7 +160,7 @@ impl Widget for OscillatorControls {
                     )))
                     .build(state, options, |b| {
                         b.set_text(&sample.name)
-                            .set_color(Color::blue()) // TODO: these needs color? or dropdown needs to be a darker color really
+                            .set_color(Color::blue())
                             .set_height(Pixels(30.0))
                             .set_width(Units::Pixels(175.))
                             .set_margin_left(Pixels(5.0))
