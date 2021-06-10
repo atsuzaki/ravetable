@@ -9,6 +9,8 @@ pub struct AudioSlider {
 
     on_change: Option<Box<dyn Fn(f32) -> Event>>,
 
+    round_label: bool,
+
     // Components
     slider: Entity,
     textbox: Entity,
@@ -22,6 +24,7 @@ impl AudioSlider {
             min,
             max,
             on_change: None,
+            round_label: false,
             slider: Entity::null(),
             textbox: Entity::null(),
         }
@@ -33,6 +36,20 @@ impl AudioSlider {
     {
         self.on_change = Some(Box::new(message));
         self
+    }
+
+    pub fn set_to_round_label(mut self, round_label: bool) -> Self {
+        self.round_label = round_label;
+        self
+    }
+
+    fn get_value_for_label(&self) -> String {
+
+        if self.round_label {
+            self.value.to_string()
+        } else {
+            format!("{:.1}", &self.value)
+        }
     }
 }
 
@@ -65,13 +82,12 @@ impl Widget for AudioSlider {
         //       disable it since it interferes with the slider for some reason.
         //       Trying to handle the events for textbox runs into fun weird mess,
         //       I think it's being worked on, might be working in experiment branch?
-        self.textbox =
-            Textbox::new(&format!("{:.1}", &self.value)).build(state, container, |builder| {
-                builder
-                    .set_width(Units::Pixels(50.0))
-                    .set_margin_left(Units::Pixels(8.))
-                    .set_margin_right(Units::Pixels(2.5))
-            });
+        self.textbox = Textbox::new(&self.get_value_for_label()).build(state, container, |builder| {
+            builder
+                .set_width(Units::Pixels(50.0))
+                .set_margin_left(Units::Pixels(8.))
+                .set_margin_right(Units::Pixels(2.5))
+        });
 
         entity
     }
@@ -95,7 +111,7 @@ impl Widget for AudioSlider {
                         }
 
                         state.insert_event(
-                            Event::new(TextboxEvent::SetValue(format!("{:.1}", &self.value)))
+                            Event::new(TextboxEvent::SetValue(self.get_value_for_label()))
                                 .target(self.textbox)
                                 .propagate(Propagation::Direct),
                         );

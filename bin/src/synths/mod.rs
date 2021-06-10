@@ -1,13 +1,15 @@
 #![allow(dead_code)]
 
+use log::info;
 use hound::WavSpec;
 use itertools::Itertools;
 use samplerate::{ConverterType, Samplerate};
 
-use crate::state::get_sample_rate;
 use effects::adsr::{ADSREnvelope, ADSR};
 use effects::filters::IIRLowPassFilter;
 use effects::{Effect, EffectStatePacket};
+
+use crate::state::get_sample_rate;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Sample {
@@ -44,7 +46,7 @@ impl Wavetable {
         }
 
         if input_wav_spec.sample_rate != output_sample_rate {
-            println!("Converting sample");
+            info!("Converting sample");
             // Instanciate a new converter.
             let sample_rate_converter = Samplerate::new(
                 ConverterType::SincBestQuality,

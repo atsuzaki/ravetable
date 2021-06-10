@@ -81,13 +81,10 @@ impl Mixer {
                         }
                     }
                     Message::ModulatedFilterParams(id, effect_id, param) => {
-                        println!("modulated filter event in mixer");
-
                         // TODO: fix this gnarly match
                         if let Effect::ModulatedFilter(e) =
                             &mut self.oscillators[id].effects[effect_id]
                         {
-                            println!("effect index: {}", effect_id);
                             match &param {
                                 ModulatedFilterParams::Filter(f) => {
                                     if let Filter::StateVariableTPTFilter(filter) = &mut e.filter {
@@ -120,11 +117,9 @@ impl Mixer {
                                     }
                                 }
                                 ModulatedFilterParams::BaseFrequency(frq) => e.set_frequency(*frq),
-                                _ => {}
                             }
                         }
                     }
-                    _ => {}
                 },
                 Err(_) => {} // This happens constantly and only means there was nothing to receive
             }

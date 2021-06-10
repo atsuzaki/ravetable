@@ -6,6 +6,7 @@ use std::f32::consts::PI;
 
 use crate::lfo::{Lfo, LfoStatePacket};
 use num_traits::FloatConst;
+use std::fmt::{Display, Formatter};
 
 pub enum Filter {
     IIRLowPassFilter(IIRLowPassFilter),
@@ -17,6 +18,16 @@ pub enum FilterType {
     LowPass,
     HighPass,
     BandPass,
+}
+
+impl Display for FilterType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FilterType::LowPass => write!(f, "Low pass"),
+            FilterType::HighPass => write!(f, "High pass"),
+            FilterType::BandPass => write!(f, "Band pass"),
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]

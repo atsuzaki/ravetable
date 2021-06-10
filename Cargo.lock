@@ -2473,7 +2473,7 @@ checksum = "62ddb402ac6c2af6f7a2844243887631c4e94b51585b229fcfddb43958cd55ca"
 [[package]]
 name = "tuix"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?rev=961924d#961924d6f4c4c02308b89bff19b17883b9db827f"
+source = "git+https://github.com/SonicZentropy/tuix?rev=fa3fd09#fa3fd09314d2c4d72c446125f82db986ee7b4a9d"
 dependencies = [
  "pollster",
  "tuix_application",
@@ -2485,7 +2485,7 @@ dependencies = [
 [[package]]
 name = "tuix_application"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?rev=961924d#961924d6f4c4c02308b89bff19b17883b9db827f"
+source = "git+https://github.com/SonicZentropy/tuix?rev=fa3fd09#fa3fd09314d2c4d72c446125f82db986ee7b4a9d"
 dependencies = [
  "femtovg",
  "keyboard-types",
@@ -2497,7 +2497,7 @@ dependencies = [
 [[package]]
 name = "tuix_core"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?rev=961924d#961924d6f4c4c02308b89bff19b17883b9db827f"
+source = "git+https://github.com/SonicZentropy/tuix?rev=fa3fd09#fa3fd09314d2c4d72c446125f82db986ee7b4a9d"
 dependencies = [
  "cssparser",
  "femtovg",
@@ -2510,7 +2510,7 @@ dependencies = [
 [[package]]
 name = "tuix_inspector_derive"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?rev=961924d#961924d6f4c4c02308b89bff19b17883b9db827f"
+source = "git+https://github.com/SonicZentropy/tuix?rev=fa3fd09#fa3fd09314d2c4d72c446125f82db986ee7b4a9d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2520,7 +2520,7 @@ dependencies = [
 [[package]]
 name = "tuix_wgpu"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?rev=961924d#961924d6f4c4c02308b89bff19b17883b9db827f"
+source = "git+https://github.com/SonicZentropy/tuix?rev=fa3fd09#fa3fd09314d2c4d72c446125f82db986ee7b4a9d"
 dependencies = [
  "env_logger",
  "femtovg",
@@ -2536,7 +2536,7 @@ dependencies = [
 [[package]]
 name = "tuix_winit"
 version = "0.1.0"
-source = "git+https://github.com/SonicZentropy/tuix?rev=961924d#961924d6f4c4c02308b89bff19b17883b9db827f"
+source = "git+https://github.com/SonicZentropy/tuix?rev=fa3fd09#fa3fd09314d2c4d72c446125f82db986ee7b4a9d"
 dependencies = [
  "femtovg",
  "keyboard-types",

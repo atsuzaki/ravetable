@@ -84,7 +84,6 @@ pub struct OscillatorControls {
 
     // components
     pub dropdown: Entity,
-    pub label: Entity,
     pub gain_knob: Entity,
     pub frequency_knob: Entity,
     pub active_toggle: Entity,
@@ -102,7 +101,6 @@ impl OscillatorControls {
             sample_label: label.into(),
             available_samples,
             gain,
-            label: Entity::null(),
             dropdown: Entity::null(),
             gain_knob: Entity::null(),
             frequency_knob: Entity::null(),
@@ -131,7 +129,7 @@ impl Widget for OscillatorControls {
                 .set_width(Units::Pixels(200.))
                 .set_margin_bottom(Units::Pixels(5.0))
         });
-        let row1 = HBox::new().build(state, container, |builder| {
+        let _row1 = HBox::new().build(state, container, |builder| {
             builder
                 .set_justify_content(JustifyContent::SpaceEvenly)
                 .set_height(Units::Pixels(100.))
@@ -150,7 +148,7 @@ impl Widget for OscillatorControls {
                 .set_width(Units::Pixels(175.))
         });
         let options = List::new().build(state, dropdown, |b| b);
-        // let options = RadioList::new().build(state, dropdown, |b| b);
+
         self.available_samples
             .iter()
             .enumerate()
@@ -170,12 +168,6 @@ impl Widget for OscillatorControls {
             });
 
         self.dropdown = dropdown;
-
-        self.label = Label::new(&self.sample_label).build(state, row1, |builder| {
-            builder
-                .set_text_justify(Justify::Center)
-                .set_width(Units::Pixels(50.0))
-        });
 
         self.gain_knob = ValueKnob::new("Gain", self.gain, 0.0, 1.0)
             .on_change(move |val| Event::new(SynthControlEvent::OscillatorControl(id, Gain(val))))
@@ -203,7 +195,6 @@ impl Widget for OscillatorControls {
                         let label = &sample.name;
 
                         self.sample_label = label.to_string();
-                        self.label.set_text(state, label);
                         state.insert_event(
                             Event::new(DropdownEvent::SetText(label.clone()))
                                 .target(self.dropdown)

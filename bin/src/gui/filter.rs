@@ -17,7 +17,16 @@ pub struct ModulatedFilterControls {
     effect_id: usize,
 
     filter: ModulatedFilterStatePacket,
+
+    // components
+    dropdown: Entity
 }
+
+const FILTER_TYPES: [FilterType; 3] = [
+    FilterType::LowPass,
+    FilterType::HighPass,
+    FilterType::BandPass,
+];
 
 impl ModulatedFilterControls {
     pub fn new(osc_id: usize, effect_id: usize, filter: ModulatedFilterStatePacket) -> Self {
@@ -25,6 +34,7 @@ impl ModulatedFilterControls {
             osc_id,
             effect_id,
             filter,
+            dropdown: Entity::null(),
         }
     }
 }
@@ -46,24 +56,42 @@ impl Widget for ModulatedFilterControls {
                 //   using good ol' negative margin to try to line it up
                 .set_margin_top(Units::Pixels(-28.))
                 .set_justify_content(JustifyContent::SpaceBetween)
+                .set_align_items(AlignItems::Center)
                 .set_max_height(Units::Pixels(120.))
                 .set_flex_direction(FlexDirection::Column)
         });
 
-        // TODO: should be dropdown
-        AudioSlider::new("Type", 0., 15_000., self.filter.base_frequency)
-            .on_change(move |val| {
-                Event::new(SynthControlEvent::ModulatedFilter(
-                    id,
-                    effect_id,
-                    ModulatedFilterParams::Filter(StateVarTPTFilterParams::FilterType(
-                        FilterType::HighPass,
-                    )),
-                ))
-            })
-            .build(state, row, |builder| builder);
+        let (_, _, dropdown) = Dropdown::new(&format!("{}", self.filter.filter.filter_type)).build(state, row, |b| {
+            b.set_height(Units::Pixels(30.0))
+                .set_width(Units::Pixels(175.))
+                .set_margin_bottom(Units::Pixels(8.))
+        });
+        let options = List::new().build(state, dropdown, |b| b);
+
+        FILTER_TYPES
+            .iter()
+            .for_each(|filter_type| {
+                CheckButton::new(false)
+                    .on_checked(Event::new(SynthControlEvent::ModulatedFilter(
+                        id,
+                        effect_id,
+                        ModulatedFilterParams::Filter(StateVarTPTFilterParams::FilterType(
+                            *filter_type,
+                        )),
+                    )))
+                    .build(state, options, |b| {
+                        b.set_text(&format!("{}", filter_type))
+                            .set_color(Color::blue()) // TODO: these needs color? or dropdown needs to be a darker color really
+                            .set_height(Pixels(30.0))
+                            .set_width(Units::Pixels(175.))
+                            .set_margin_left(Pixels(5.0))
+                    });
+            });
+
+        self.dropdown = dropdown;
 
         AudioSlider::new("Frq", 0., 15_000., self.filter.base_frequency)
+            .set_to_round_label(true)
             .on_change(move |val| {
                 use crate::messages::StateVarTPTFilterParams::*;
                 Event::new(SynthControlEvent::ModulatedFilter(
@@ -95,6 +123,8 @@ impl Widget for ModulatedFilterControls {
                 .set_text_justify(Justify::Center)
                 .set_flex_grow(1.)
                 .set_min_width(Units::Pixels(50.))
+                // Same here with negative margin
+                .set_margin_top(Units::Pixels(-16.))
         });
 
         let row3 = HBox::new().build(state, container, |builder| {
@@ -103,6 +133,8 @@ impl Widget for ModulatedFilterControls {
                 .set_flex_direction(FlexDirection::Row)
                 .set_max_height(Units::Pixels(0.))
                 .set_height(Units::Pixels(0.))
+                // Same here with negative margin
+                .set_margin_top(Units::Pixels(-4.))
         });
 
         ValueKnob::new("Frq", self.filter.lfo.frequency, 0.0, 10.0)
@@ -132,5 +164,28 @@ impl Widget for ModulatedFilterControls {
             });
 
         entity
+    }
+
+    fn on_event(&mut self, state: &mut State, _entity: Entity, event: &mut Event) {
+        if let Some(SynthControlEvent::ModulatedFilter(osc_id, effect_id, param)) =
+        event.message.downcast::<SynthControlEvent>()
+        {
+            if self.osc_id == *osc_id && self.effect_id == *effect_id {
+                match param {
+                    ModulatedFilterParams::Filter(StateVarTPTFilterParams::FilterType(
+                                                      filter_type,
+                                                  )) => {
+                        let label = format!("{}", filter_type);
+
+                        state.insert_event(
+                            Event::new(DropdownEvent::SetText(label.clone()))
+                                .target(self.dropdown)
+                                .propagate(Propagation::Up),
+                        )
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
 }

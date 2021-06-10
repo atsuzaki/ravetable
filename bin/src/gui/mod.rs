@@ -17,6 +17,7 @@ mod events;
 mod filter;
 mod oscillator;
 
+#[allow(unused)]
 pub struct Controller {
     command_sender: crossbeam_channel::Sender<Message>,
     command_receiver: crossbeam_channel::Receiver<Message>,
@@ -136,7 +137,6 @@ impl Widget for Controller {
                         .unwrap();
                 }
                 SynthControlEvent::ModulatedFilter(id, effect_id, val) => {
-                    println!("modulated filter event");
                     self.command_sender
                         .send(Message::ModulatedFilterParams(*id, *effect_id, val.clone()))
                         .unwrap();

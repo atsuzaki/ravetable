@@ -16,7 +16,7 @@ clap = { version = "2.33.3", default-features = false }
 #samplerate for converting wavs to requested output at load
 samplerate = "0.2.4"
 
-tuix = { git = "https://github.com/SonicZentropy/tuix",  rev = "961924d" }
+tuix = { git = "https://github.com/SonicZentropy/tuix",  rev = "fa3fd09" }
 
 log = "0.4.14"
 fern = "0.6.0"

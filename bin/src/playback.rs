@@ -1,7 +1,10 @@
 use cpal::traits::{DeviceTrait, StreamTrait};
+use log::info;
 
-use crate::messages::Message;
-use crate::mixer::Mixer;
+use crate::{
+    messages::Message,
+    mixer::Mixer,
+};
 
 pub fn run<T>(
     device: &cpal::Device,
@@ -32,7 +35,7 @@ where
 
     let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
 
-    println!("Channels for output: {}", output_channels);
+    info!("Channels for output: {}", output_channels);
 
     let stream = device.build_output_stream(
         config,
@@ -67,7 +70,6 @@ fn write_data<T>(
             2 => {
                 for sample in frame.iter_mut() {
                     *sample = cpal::Sample::from::<f32>(&next_sample());
-                    //println!("Sample is {}", sample.);
                 }
             }
             _ => panic!("Unsupported channels found in input audio"),

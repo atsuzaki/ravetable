@@ -7,17 +7,18 @@ use std::path::Path;
 use std::thread;
 
 use cpal::traits::{DeviceTrait, HostTrait};
+use log::info;
 use tuix::*;
 
 use effects::filters::{Filter, FilterType, ModulatedFilter, StateVariableTPTFilter};
 use effects::lfo::{Lfo, LfoType};
+use effects::Effect;
 
 use crate::gui::Controller;
 use crate::mixer::{Mixer, MixerStatePacket};
 use crate::playback::run;
 use crate::state::{get_sample_rate, set_sample_rate};
 use crate::synths::{Oscillator, Sample, Wavetable};
-use effects::Effect;
 
 mod gui;
 mod keyboard;
@@ -26,7 +27,6 @@ mod mixer;
 mod playback;
 mod state;
 mod synths;
-mod utils;
 
 #[derive(Debug)]
 struct Opt {
@@ -70,13 +70,13 @@ fn main() -> Result<(), anyhow::Error> {
     let host = cpal::default_host();
 
     let device = host.default_output_device().expect("Device failed");
-    println!(
+    info!(
         "Output device: {}",
         device.name().expect("No output device found")
     );
 
     let config = device.default_output_config().unwrap();
-    println!("Default output config: {:?}", config);
+    info!("Default output config: {:?}", config);
     let sample_rate = config.sample_rate();
 
     set_sample_rate(sample_rate);
@@ -131,25 +131,29 @@ fn start_gui(
     mixer_state_packet: MixerStatePacket,
     available_samples: Vec<Sample>,
 ) {
-    let app = Application::new(|state, window| {
-        match state.add_stylesheet("bin/src/bbytheme.css") {
-            Ok(_) => {}
-            Err(e) => println!("Error loading stylesheet: {}", e),
-        }
+    let app = Application::new(
+        |state, window| {
+            match state.add_stylesheet("bin/src/bbytheme.css") {
+                Ok(_) => {}
+                Err(e) => panic!("Error loading stylesheet: {}", e),
+            }
 
-        window
-            .set_background_color(state, Color::rgb(17, 21, 22))
-            .set_justify_content(state, JustifyContent::Center)
-            .set_align_items(state, AlignItems::Center);
+            window
+                .set_background_color(state, Color::rgb(17, 21, 22))
+                .set_justify_content(state, JustifyContent::Center)
+                .set_align_items(state, AlignItems::Center);
 
-        Controller::new(
-            tx.clone(),
-            rx.clone(),
-            mixer_state_packet,
-            available_samples,
-        )
+            Controller::new(
+                tx.clone(),
+                rx.clone(),
+                mixer_state_packet,
+                available_samples,
+            )
             .build(state, window.entity(), |builder| builder);
-    }, Some(830), Some(680));
+        },
+        Some(830),
+        Some(680),
+    );
 
     app.run();
 }
