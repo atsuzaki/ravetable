@@ -1,10 +1,7 @@
 use cpal::traits::{DeviceTrait, StreamTrait};
 use log::info;
 
-use crate::{
-    messages::Message,
-    mixer::Mixer,
-};
+use crate::{messages::Message, mixer::Mixer};
 
 pub fn run<T>(
     device: &cpal::Device,

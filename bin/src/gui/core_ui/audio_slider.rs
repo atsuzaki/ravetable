@@ -44,7 +44,6 @@ impl AudioSlider {
     }
 
     fn get_value_for_label(&self) -> String {
-
         if self.round_label {
             self.value.to_string()
         } else {
@@ -82,12 +81,13 @@ impl Widget for AudioSlider {
         //       disable it since it interferes with the slider for some reason.
         //       Trying to handle the events for textbox runs into fun weird mess,
         //       I think it's being worked on, might be working in experiment branch?
-        self.textbox = Textbox::new(&self.get_value_for_label()).build(state, container, |builder| {
-            builder
-                .set_width(Units::Pixels(50.0))
-                .set_margin_left(Units::Pixels(8.))
-                .set_margin_right(Units::Pixels(2.5))
-        });
+        self.textbox =
+            Textbox::new(&self.get_value_for_label()).build(state, container, |builder| {
+                builder
+                    .set_width(Units::Pixels(50.0))
+                    .set_margin_left(Units::Pixels(8.))
+                    .set_margin_right(Units::Pixels(2.5))
+            });
 
         entity
     }

@@ -175,12 +175,15 @@ impl Widget for OscillatorControls {
                 builder.set_width(Units::Pixels(50.0))
             });
 
-        self.frequency_knob = ValueKnob::new("Frequency", 440.0, 0.0, 6000.0) // TODO: supply with actual value osc is initialized with
-            // .on_change(move |val| {
-            // })
-            .build(state, row2, |builder| {
-                builder.set_width(Units::Pixels(50.0))
-            });
+        // TODO: This was here pre-keyboard midi input to test the synth. Just a single gain knob
+        //       is lonely, so I'm finding something to replace it with.
+        //       The popular choice so far is a Sausage Fattener knob that does nothing
+        // self.frequency_knob = ValueKnob::new("Frequency", 440.0, 0.0, 6000.0)
+        //     // .on_change(move |val| {
+        //     // })
+        //     .build(state, row2, |builder| {
+        //         builder.set_width(Units::Pixels(50.0))
+        //     });
 
         entity
     }

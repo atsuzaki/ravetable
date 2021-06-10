@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-use log::info;
 use hound::WavSpec;
 use itertools::Itertools;
+use log::info;
 use samplerate::{ConverterType, Samplerate};
 
 use effects::adsr::{ADSREnvelope, ADSR};

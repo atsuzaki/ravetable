@@ -19,7 +19,7 @@ pub struct ModulatedFilterControls {
     filter: ModulatedFilterStatePacket,
 
     // components
-    dropdown: Entity
+    dropdown: Entity,
 }
 
 const FILTER_TYPES: [FilterType; 3] = [
@@ -61,32 +61,31 @@ impl Widget for ModulatedFilterControls {
                 .set_flex_direction(FlexDirection::Column)
         });
 
-        let (_, _, dropdown) = Dropdown::new(&format!("{}", self.filter.filter.filter_type)).build(state, row, |b| {
-            b.set_height(Units::Pixels(30.0))
-                .set_width(Units::Pixels(175.))
-                .set_margin_bottom(Units::Pixels(8.))
-        });
+        let (_, _, dropdown) =
+            Dropdown::new(&format!("{}", self.filter.filter.filter_type)).build(state, row, |b| {
+                b.set_height(Units::Pixels(30.0))
+                    .set_width(Units::Pixels(175.))
+                    .set_margin_bottom(Units::Pixels(8.))
+            });
         let options = List::new().build(state, dropdown, |b| b);
 
-        FILTER_TYPES
-            .iter()
-            .for_each(|filter_type| {
-                CheckButton::new(false)
-                    .on_checked(Event::new(SynthControlEvent::ModulatedFilter(
-                        id,
-                        effect_id,
-                        ModulatedFilterParams::Filter(StateVarTPTFilterParams::FilterType(
-                            *filter_type,
-                        )),
-                    )))
-                    .build(state, options, |b| {
-                        b.set_text(&format!("{}", filter_type))
-                            .set_color(Color::blue()) // TODO: these needs color? or dropdown needs to be a darker color really
-                            .set_height(Pixels(30.0))
-                            .set_width(Units::Pixels(175.))
-                            .set_margin_left(Pixels(5.0))
-                    });
-            });
+        FILTER_TYPES.iter().for_each(|filter_type| {
+            CheckButton::new(false)
+                .on_checked(Event::new(SynthControlEvent::ModulatedFilter(
+                    id,
+                    effect_id,
+                    ModulatedFilterParams::Filter(StateVarTPTFilterParams::FilterType(
+                        *filter_type,
+                    )),
+                )))
+                .build(state, options, |b| {
+                    b.set_text(&format!("{}", filter_type))
+                        .set_color(Color::blue()) // TODO: these needs color? or dropdown needs to be a darker color really
+                        .set_height(Pixels(30.0))
+                        .set_width(Units::Pixels(175.))
+                        .set_margin_left(Pixels(5.0))
+                });
+        });
 
         self.dropdown = dropdown;
 
@@ -168,13 +167,13 @@ impl Widget for ModulatedFilterControls {
 
     fn on_event(&mut self, state: &mut State, _entity: Entity, event: &mut Event) {
         if let Some(SynthControlEvent::ModulatedFilter(osc_id, effect_id, param)) =
-        event.message.downcast::<SynthControlEvent>()
+            event.message.downcast::<SynthControlEvent>()
         {
             if self.osc_id == *osc_id && self.effect_id == *effect_id {
                 match param {
                     ModulatedFilterParams::Filter(StateVarTPTFilterParams::FilterType(
-                                                      filter_type,
-                                                  )) => {
+                        filter_type,
+                    )) => {
                         let label = format!("{}", filter_type);
 
                         state.insert_event(
