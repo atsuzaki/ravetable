@@ -6,8 +6,6 @@
 
 For CS 410P/510 Computers, Sound and Music (Spring 2021) at Portland State University
 
-Katherine Philip
-
 ## Building
 This program is written in Rust, so you'll need a modern Rust (stable) toolchain in order to build it. The easiest way is with [Rustup](https://rustup.rs/).
 
